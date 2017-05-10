@@ -1,0 +1,675 @@
+<?xml version="1.0"?>
+<!--
+  ~ Magmodules.eu - http://www.magmodules.eu
+  ~
+  ~ NOTICE OF LICENSE
+  ~ This source file is subject to the Open Software License (OSL 3.0)
+  ~ that is bundled with this package in the file LICENSE.txt.
+  ~ It is also available through the world-wide-web at this URL:
+  ~ http://opensource.org/licenses/osl-3.0.php
+  ~ If you did not receive a copy of the license and are unable to
+  ~ obtain it through the world-wide-web, please send an email
+  ~ to info@magmodules.eu so we can send you a copy immediately.
+  ~
+  ~ @category      Magmodules
+  ~ @package       Magmodules_Sooqr
+  ~ @author        Magmodules <info@magmodules.eu>
+  ~ @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+  ~ @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+  -->
+<config>
+    <tabs>
+        <magmodules translate="label" module="sooqr">
+            <label>Magmodules</label>
+            <sort_order>200</sort_order>
+        </magmodules>
+    </tabs>
+    <sections>
+        <sooqr_connect translate="label" module="sooqr">
+            <label>Sooqr Connect</label>
+            <tab>magmodules</tab>
+            <frontend_type>text</frontend_type>
+            <sort_order>119</sort_order>
+            <show_in_default>1</show_in_default>
+            <show_in_website>1</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                <info>
+                    <frontend_model>sooqr/adminhtml_widget_info_info</frontend_model>
+                    <sort_order>1</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                </info>
+                <general translate="label" module="sooqr">
+                    <label>General</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>2</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
+                    <fields>
+                        <note translate="label">
+                            <label><![CDATA[Set the general settings to connect your store with the Sooqr API.]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </note>
+                        <version translate="label">
+                            <label>Extension Version</label>
+                            <frontend_type>text</frontend_type>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_version</frontend_model>
+                            <sort_order>2</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </version>
+                        <enabled translate="label">
+                            <label>Enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </enabled>
+                        <api_heading translate="label">
+                            <label>API Details</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </api_heading>
+                        <account_id translate="label">
+                            <label>Sooqr Account ID</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <tooltip>You can find your Sooqr Account ID in your Sooqr account, you can find the link in the information box at the top of this page.</tooltip>
+                            <comment>It should look like SQ-12345-1.</comment>
+                        </account_id>
+                        <api_key translate="label">
+                            <label>Sooqr API Key</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>12</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <tooltip>You can find your Sooqr API Key in your Sooqr account, you can find the link in the information box at the top of this page.</tooltip>
+                        </api_key>
+                        <frontend_heading translate="label">
+                            <label>Frontend Settings</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>20</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </frontend_heading>
+                        <frontend_enabled translate="label">
+                            <label>Enable</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>21</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </frontend_enabled>
+                        <statistics translate="label">
+                            <label>Statistics</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </statistics>
+                        <advanced_heading translate="label">
+                            <label>Advanced Settings</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </advanced_heading>
+                        <parent translate="label">
+                            <label>Parent HTML node</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>31</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </parent>
+                        <staging translate="label">
+                            <label>Staging Environment</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>32</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </staging>
+                        <debugging translate="label">
+                            <label>Enable Debugging</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>33</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </debugging>
+                        <frontend_version translate="label">
+                            <label>Frontend Version</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_version</source_model>
+                            <sort_order>34</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </frontend_version>
+                        <custom_js translate="label">
+                            <label>Custom JS</label>
+                            <frontend_type>textarea</frontend_type>
+                            <sort_order>35</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </custom_js>
+                    </fields>
+                </general>
+                <products translate="label" module="sooqr">
+                    <label>Product &amp; CMS Data</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>3</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
+                    <fields>
+                        <note translate="label">
+                            <label><![CDATA[This section lists all the available attributes for the Sooqr Product Feed. Some attributes are required for all products and some are required for certain product types such as apparel, others are recommended. To get the best results with Sooqr lease make sure that you provide most of the attributes.]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </note>
+                        <data_heading translate="label">
+                            <label>Product Fields</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </data_heading>
+                        <id_attribute translate="label">
+                            <label>ID</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_productid</source_model>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </id_attribute>
+                        <name_attribute translate="label">
+                            <label>Name</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_attribute</source_model>
+                            <sort_order>12</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </name_attribute>
+                        <sku_attribute translate="label">
+                            <label>Sku</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_attribute</source_model>
+                            <sort_order>13</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </sku_attribute>
+                        <description_attribute translate="label">
+                            <label>Description</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_attribute</source_model>
+                            <sort_order>14</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </description_attribute>
+                        <brand_attribute translate="label">
+                            <label>Brand</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_attribute</source_model>
+                            <sort_order>15</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </brand_attribute>
+                        <images_heading translate="label">
+                            <label>Images</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>20</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </images_heading>
+                        <note_resize translate="label">
+                            <label><![CDATA[Image resize options are only available on store level which can be selected from the scope dropdown on the left top of this page.<br>]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>21</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </note_resize>
+                        <image_source translate="label">
+                            <label>Source</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_images</source_model>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </image_source>
+                        <image_resize translate="label">
+                            <label>Resize Image</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_resize</source_model>
+                            <sort_order>23</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </image_resize>
+                        <image_size_fixed translate="label">
+                            <label>Image Size</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_cacheresize</source_model>
+                            <sort_order>24</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <image_resize>fixed</image_resize>
+                            </depends>
+                            <comment>List of available sizes in cache directory.</comment>
+                        </image_size_fixed>
+                        <image_size_custom translate="label">
+                            <label>Image Size</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>24</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <image_resize>custom</image_resize>
+                            </depends>
+                            <comment>Example format: 200x300</comment>
+                        </image_size_custom>
+                        <extra_heading translate="label">
+                            <label>Extra Fields</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </extra_heading>
+                        <extra_note translate="label">
+                            <label><![CDATA[Add your custom attributes as Sooqr fields. The maximum number of allowed fields is restricted by your Sooqr subscription.]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>31</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </extra_note>
+                        <extra>
+                            <label>Extra Fields</label>
+                            <frontend_model>sooqr/adminhtml_config_form_field_extra</frontend_model>
+                            <backend_model>sooqr/adminhtml_system_config_backend_design_extra</backend_model>
+                            <sort_order>32</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </extra>
+                        <tax_heading translate="label">
+                            <label>Prices and Tax</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>40</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </tax_heading>
+                        <tax_note translate="label">
+                            <label><![CDATA[By default prices are shown incl. Tax so only change this option if necessary.<br>If the feed export is without tax it's possible to add it with this option.<br>]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>41</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </tax_note>
+                        <force_tax translate="label">
+                            <label>Force Tax Usage</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_tax</source_model>
+                            <sort_order>42</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </force_tax>
+                        <add_tax translate="label">
+                            <label>Manually Add Tax</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>43</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </add_tax>
+                        <tax_percentage translate="label">
+                            <label>Percentage</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>44</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[When the tax percentage is 21% use 21.]]></comment>
+                            <depends>
+                                <add_tax>1</add_tax>
+                            </depends>
+                        </tax_percentage>
+                        <configurable_heading translate="label">
+                            <label>Configurable &amp; Grouped</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>50</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </configurable_heading>
+                        <configurable_note translate="label">
+                            <label><![CDATA[Export non visible simple products of configurable and grouped products.]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>51</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </configurable_note>
+                        <conf_enabled translate="label">
+                            <label>Enable</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>52</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </conf_enabled>
+                        <conf_fields translate="label">
+                            <label>Use the Parent Data for Simple</label>
+                            <frontend_type>multiselect</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_configurable</source_model>
+                            <sort_order>53</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <conf_enabled>1</conf_enabled>
+                            </depends>
+                            <comment>Use the parent data</comment>
+                        </conf_fields>
+                        <grouped_price translate="label">
+                            <label>Grouped Price</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_pricemodel</source_model>
+                            <sort_order>54</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </grouped_price>
+                        <category_heading translate="label">
+                            <label>Filter by Category</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>60</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </category_heading>
+                        <category_enabled translate="label">
+                            <label>Enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>61</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </category_enabled>
+                        <category_type translate="label">
+                            <label>Type of filter</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_categorytype</source_model>
+                            <sort_order>62</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <category_enabled>1</category_enabled>
+                            </depends>
+                        </category_type>
+                        <categories translate="label">
+                            <label>Category</label>
+                            <frontend_type>multiselect</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_category</source_model>
+                            <sort_order>63</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <category_enabled>1</category_enabled>
+                            </depends>
+                        </categories>
+                        <advanced_heading translate="label">
+                            <label>Advanced</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>70</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </advanced_heading>
+                        <advanced>
+                            <label>Advanced Filter</label>
+                            <frontend_model>sooqr/adminhtml_config_form_field_filter</frontend_model>
+                            <backend_model>sooqr/adminhtml_system_config_backend_design_filter</backend_model>
+                            <sort_order>71</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </advanced>
+                        <cms_heading translate="label">
+                            <label>Export CMS Pages</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>80</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </cms_heading>
+                        <cms_pages translate="label">
+                            <label>Enable</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_cms</source_model>
+                            <sort_order>81</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </cms_pages>
+                        <cms_include translate="label">
+                            <label>Only include</label>
+                            <frontend_type>multiselect</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_cmspages</source_model>
+                            <sort_order>82</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <cms_pages>2</cms_pages>
+                            </depends>
+                        </cms_include>
+                    </fields>
+                </products>
+                <generate translate="label" module="sooqr">
+                    <label>Feed Generation Settings</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>8</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <expanded>1</expanded>
+                    <fields>
+                        <note translate="label">
+                            <label><![CDATA[Each store view will have their own Sooqr feed, you can easily activate or de-activate the Sooqr feed generation on store level or automatically generate the Sooqr feed. In case your not using the cron job functionality it's possible to generate the Sooqr feed manually.]]></label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_note</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </note>
+                        <exclude_heading translate="label">
+                            <label>Feed Generation</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </exclude_heading>
+                        <enabled translate="label">
+                            <label>Enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </enabled>
+                        <filename translate="label">
+                            <label>Filename</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>12</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[sqoor-datatfeed.xml]]></comment>
+                        </filename>
+                        <limit translate="label">
+                            <label>Limit Products</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>13</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[Set limit for testing, use 0 for all products]]></comment>
+                        </limit>
+                        <server_heading translate="label">
+                            <label>Overwrite server settings</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>20</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </server_heading>
+                        <overwrite translate="label">
+                            <label>Enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>21</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <tooltip>Only use this option if it's necessary to overwrite this setting because of your server memory limit or execution time.</tooltip>
+                        </overwrite>
+                        <memory_limit translate="label">
+                            <label>Memory Limit</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <overwrite>1</overwrite>
+                            </depends>
+                            <comment><![CDATA[This overwrites the maximum amount of memory in bytes that a script is allowed to allocate, eg: 1024M.]]></comment>
+                        </memory_limit>
+                        <max_execution_time translate="label">
+                            <label>Max Execution Time</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>23</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <overwrite>1</overwrite>
+                            </depends>
+                            <comment><![CDATA[This overwrites the maximum time in seconds a script is allowed to run before it is terminated by the parser, eg: 300 (for 5 minutes).]]></comment>
+                        </max_execution_time>
+                        <cron_heading translate="label">
+                            <label>Cron</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </cron_heading>
+                        <cron translate="label">
+                            <label>Enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>31</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </cron>
+                        <frequency translate="label">
+                            <label>Frequency</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>sooqr/adminhtml_system_config_source_frequency</source_model>
+                            <backend_model>sooqr/adminhtml_system_config_backend_sooqr_cron</backend_model>
+                            <sort_order>32</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </frequency>
+                        <custom_cron translate="label">
+                            <label>Custom Cron Expression</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>33</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <frequency>custom_expr</frequency>
+                            </depends>
+                            <comment><![CDATA[e.g. 15 */2 * * *]]></comment>
+                        </custom_cron>
+                        <feeds_heading translate="label">
+                            <label>Generated Feeds</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
+                            <sort_order>40</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </feeds_heading>
+                        <feeds_text translate="label">
+                            <label>Text</label>
+                            <frontend_model>sooqr/adminhtml_system_config_form_field_feeds</frontend_model>
+                            <sort_order>41</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </feeds_text>
+                    </fields>
+                </generate>
+            </groups>
+        </sooqr_connect>
+    </sections>
+</config>

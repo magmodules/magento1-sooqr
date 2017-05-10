@@ -1,0 +1,48 @@
+<?php
+/**
+ * Magmodules.eu - http://www.magmodules.eu
+ *
+ * NOTICE OF LICENSE
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to info@magmodules.eu so we can send you a copy immediately.
+ *
+ * @category      Magmodules
+ * @package       Magmodules_Sooqr
+ * @author        Magmodules <info@magmodules.eu>
+ * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+$catalogSearchHelper = $this->helper('catalogsearch');
+?>
+<form id="search_mini_form" action="<?php echo $catalogSearchHelper->getResultUrl() ?>" method="get">
+    <div class="input-box">
+        <label for="search"><?php echo $this->__('Search:') ?></label>
+        <input id="search" type="search" name="<?php echo $catalogSearchHelper->getQueryParamName() ?>" value="<?php echo $catalogSearchHelper->getEscapedQueryText() ?>" class="input-text required-entry" placeholder="<?php echo $this->quoteEscape($this->__('Search entire store here...')) ?>"/>
+        <button type="submit" title="<?php echo $this->quoteEscape($this->__('Search')) ?>" class="button search-button">
+            <span><span><?php echo $this->__('Search') ?></span></span></button>
+    </div>
+    <script type="text/javascript">
+        var _wssq = _wssq || [];
+        _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
+        _wssq.push(['suggest._setPosition', 'screen-middle']);
+        _wssq.push(['suggest._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
+        _wssq.push(['suggest._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
+        <?php if (!$this->isTrackingEnabled()) { ?>
+        _wssq.push(['suggest._disableTracking']);
+        <?php } ?>
+        <?php echo $this->getSooqrJavascript() ?>
+        (function () {
+            var ws = document.createElement('script');
+            ws.type = 'text/javascript';
+            ws.async = true;
+            ws.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + '<?php echo $this->getSooqrScriptUri() ?>';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ws, s);
+        })();
+    </script>
+</form>
