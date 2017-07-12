@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -17,9 +18,10 @@
  * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 class Magmodules_Sooqr_Block_Search extends Mage_Core_Block_Template
 {
+
+    const SEARCH_FIELD_ID = 'search';
 
     /**
      *
@@ -52,12 +54,36 @@ class Magmodules_Sooqr_Block_Search extends Mage_Core_Block_Template
     }
 
     /**
+     * @return bool
+     */
+    public function multiSearch()
+    {
+        if (!empty(Mage::getStoreConfig('sooqr_connect/general/extra_search', 0))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $type
+     *
      * @return array
      */
-    public function getSooqrOptions()
+    public function getSooqrOptions($type = '')
     {
+        $options = array();
         $accountId = Mage::getStoreConfig('sooqr_connect/general/account_id');
-        $options = array('account' => $accountId, 'fieldId' => 'search');
+
+        if ($type == 'second') {
+            $options['fieldId'] = Mage::getStoreConfig('sooqr_connect/general/extra_search');
+            $options['namespace'] = 'suggest2';
+            $options['account'] = substr($accountId, 0, -1) . '2';
+        } else {
+            $options['account'] = $accountId;
+            $options['fieldId'] = self::SEARCH_FIELD_ID;
+        }
+
         $parent = Mage::getStoreConfig('sooqr_connect/general/parent');
         if (!empty($parent)) {
             $options['containerParent'] = $parent;

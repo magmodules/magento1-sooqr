@@ -172,10 +172,19 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </frontend_version>
+                        <extra_search translate="label">
+                            <label>ID Second Search Block</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>35</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Leave empty when storefront uses one searchfield</comment>
+                        </extra_search>
                         <custom_js translate="label">
                             <label>Custom JS</label>
                             <frontend_type>textarea</frontend_type>
-                            <sort_order>35</sort_order>
+                            <sort_order>36</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
