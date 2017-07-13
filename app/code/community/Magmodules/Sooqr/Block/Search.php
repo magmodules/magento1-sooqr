@@ -58,7 +58,8 @@ class Magmodules_Sooqr_Block_Search extends Mage_Core_Block_Template
      */
     public function multiSearch()
     {
-        if (!empty(Mage::getStoreConfig('sooqr_connect/general/extra_search', 0))) {
+        $multi = Mage::getStoreConfig('sooqr_connect/general/extra_search', 0);
+        if (!empty($multi)) {
             return true;
         }
 
