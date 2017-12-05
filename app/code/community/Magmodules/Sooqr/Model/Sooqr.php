@@ -22,27 +22,98 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
 {
 
     /**
-     * @param $storeId
-     * @param $timeStart
+     * @var Magmodules_Sooqr_Helper_Data
+     */
+    public $helper;
+
+    /**
+     * Magmodules_Sooqr_Model_Sooqr constructor.
+     */
+    public function __construct()
+    {
+        $this->helper = Mage::helper('sooqr');
+    }
+
+    /**
+     * @param        $storeId
+     * @param string $type
      *
      * @return array
      */
-    public function generateFeed($storeId, $timeStart)
+    public function generateFeed($storeId, $type = 'xml')
     {
+        $timeStart = microtime(true);
         $this->setMemoryLimit($storeId);
-        $helper = Mage::helper('sooqr');
-        $config = $this->getFeedConfig($storeId);
-        $products = $this->getProducts($config, $config['limit']);
-        $prices = $helper->getTypePrices($config, $products);
-        $parentAttributes = $helper->getConfigurableAttributesAsArray($products, $config);
-
-        $io = $helper->createFeed($config);
+        $config = $this->getFeedConfig($storeId, $type);
+        $io = $this->helper->createFeed($config);
         $summary = $this->getFeedHeader($config);
-        $helper->writeRow($summary, $io, 'config');
-        $feedStats = $this->getFeedData($products, $config, $parentAttributes, $prices, $io, $timeStart);
-        $helper->closeFeed($io, $config);
+        $this->helper->writeRow($summary, $io, 'config');
+        $products = $this->getProducts($config);
+
+        if ($type == 'preview') {
+            $pages = 1;
+        } else {
+            $pages = $products->getLastPageNumber();
+        }
+
+        $curPage = 1;
+        $processed = 0;
+
+        do {
+            $products->setCurPage($curPage);
+            $products->load();
+
+            $parentRelations = $this->helper->getParentsFromCollection($products, $config);
+            $parents = $this->getParents($parentRelations, $config);
+            $prices = $this->helper->getTypePrices($config, $parents);
+            $parentAttributes = $this->helper->getConfigurableAttributesAsArray($parents, $config);
+            $processed += $this->getFeedData($products, $parents, $config, $parentAttributes, $prices, $io, $parentRelations);
+
+            if ($config['debug_memory'] && ($type != 'preview')) {
+                $this->helper->addLog($curPage, $pages, $processed);
+            }
+
+            $products->clear();
+            $parents = null;
+            $prices = null;
+            $parentAttributes = null;
+            $curPage++;
+        } while ($curPage <= $pages);
+
+        if ($cmsPages = $this->getCmspages($config)) {
+            foreach ($cmsPages as $item) {
+                $this->helper->writeRow($item, $io, 'product');
+            }
+        }
+
+        $summary = $this->getFeedResults($timeStart, $processed, $config['limit']);
+        $this->helper->writeRow($summary, $io, 'results');
+
+        $feedStats = array();
+        $feedStats['qty'] = $processed;
+        $feedStats['date'] = date("Y-m-d H:i:s", Mage::getModel('core/date')->timestamp(time()));
+        $feedStats['url'] = $config['file_url'];
+        $feedStats['pages'] = $pages;
+
+        $this->helper->closeFeed($io, $config);
 
         return $feedStats;
+    }
+
+    /**
+     * @param $storeId
+     */
+    protected function setMemoryLimit($storeId)
+    {
+        if (Mage::getStoreConfig('sooqr_connect/generate/overwrite', $storeId)) {
+            if ($memoryLimit = Mage::getStoreConfig('sooqr_connect/generate/memory_limit', $storeId)) {
+                ini_set('memory_limit', $memoryLimit);
+            }
+
+            if ($maxExecutionTime = Mage::getStoreConfig('sooqr_connect/generate/max_execution_time', $storeId)) {
+                ini_set('max_execution_time', $maxExecutionTime);
+            }
+        }
     }
 
     /**
@@ -53,23 +124,25 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
      */
     public function getFeedConfig($storeId, $type = 'xml')
     {
-
         $config = array();
-        $feed = Mage::helper('sooqr');
-        $filename = $this->getFileName('sooqr', $storeId);
-        $websiteId = Mage::app()->getStore($storeId)->getWebsiteId();
 
-        // DEFAULTS
+        $store = Mage::app()->getStore($storeId);
+        $website = Mage::getModel('core/website')->load($store->getWebsiteId());
+        $websiteUrl = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+
         $config['store_id'] = $storeId;
-        $config['website_name'] = $feed->cleanData(Mage::getModel('core/website')->load($websiteId)->getName(), 'striptags');
-        $config['website_url'] = Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK);
-        $config['media_url'] = Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+        $config['website_name'] = $this->helper->cleanData($website->getName(), 'striptags');
+        $config['website_url'] = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK);
+        $config['media_url'] = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
         $config['media_image_url'] = $config['media_url'] . 'catalog' . DS . 'product';
-        $config['media_gallery_id'] = Mage::getResourceModel('eav/entity_attribute')->getIdByCode('catalog_product', 'media_gallery');
+        $config['media_attributes'] = $this->helper->getMediaAttributes();
+        $config['media_gallery_id'] = Mage::getResourceModel('eav/entity_attribute')
+            ->getIdByCode('catalog_product', 'media_gallery');
         $config['image_source'] = Mage::getStoreConfig('sooqr_connect/products/image_source', $storeId);
         $config['image_resize'] = Mage::getStoreConfig('sooqr_connect/products/image_resize', $storeId);
-        $config['file_name'] = $filename;
-        $config['limit'] = Mage::getStoreConfig('sooqr_connect/generate/limit', $storeId);
+        $config['file_name'] = $this->getFileName('sooqr', $storeId);
+        $config['file_path'] = Mage::getBaseDir() . DS . 'media' . DS . 'sooqr';
+        $config['file_url'] = $websiteUrl . 'sooqr' . DS . $config['file_name'];
         $config['version'] = (string)Mage::getConfig()->getNode()->modules->Magmodules_Sooqr->version;
         $config['filter_enabled'] = Mage::getStoreConfig('sooqr_connect/products/category_enabled', $storeId);
         $config['filter_cat'] = Mage::getStoreConfig('sooqr_connect/products/categories', $storeId);
@@ -77,7 +150,7 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $config['cms_pages'] = Mage::getStoreConfig('sooqr_connect/products/cms_pages', $storeId);
         $config['cms_include'] = Mage::getStoreConfig('sooqr_connect/products/cms_include', $storeId);
         $config['filters'] = @unserialize(Mage::getStoreConfig('sooqr_connect/products/advanced', $storeId));
-        $config['product_url_suffix'] = $feed->getProductUrlSuffix($storeId);
+        $config['product_url_suffix'] = $this->helper->getProductUrlSuffix($storeId);
         $config['stock_manage'] = Mage::getStoreConfig('cataloginventory/item_options/manage_stock');
         $config['backorders'] = Mage::getStoreConfig('cataloginventory/item_options/backorders');
         $config['token'] = Mage::getStoreConfig('sooqr_connect/generate/token');
@@ -97,13 +170,15 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $config['currency_data'] = $this->getCurrencies($storeId, $config['base_currency_code'], $config['currency']);
         $config['conf_enabled'] = Mage::getStoreConfig('sooqr_connect/products/conf_enabled', $storeId);
         $config['conf_fields'] = Mage::getStoreConfig('sooqr_connect/products/conf_fields', $storeId);
-
-        $config['markup'] = $feed->getPriceMarkup($config);
-        $config['use_tax'] = $feed->getTaxUsage($config);
+        $config['bypass_flat'] = Mage::getStoreConfig('sooqr_connect/generate/bypass_flat', $storeId);
+        $config['debug_memory'] = Mage::getStoreConfig('sooqr_connect/generate/debug_memory', $storeId);
+        $config['markup'] = $this->helper->getPriceMarkup($config);
+        $config['use_tax'] = $this->helper->getTaxUsage($config);
 
         // FIELD & CATEGORY DATA
         $config['field'] = $this->getFeedAttributes($storeId, $type, $config);
-        $config['category_data'] = $feed->getCategoryData($config, $storeId);
+        $config['parent_att'] = $this->getParentAttributeSelection($config['field']);
+        $config['category_data'] = $this->helper->getCategoryData($config, $storeId);
 
         if ($config['image_resize'] == 'fixed') {
             $config['image_size'] = Mage::getStoreConfig('sooqr_connect/products/image_size_fixed', $storeId);
@@ -111,10 +186,15 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             $config['image_size'] = Mage::getStoreConfig('sooqr_connect/products/image_size_custom', $storeId);
         }
 
-        $websiteUrl = Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
-        $config['file_name'] = $this->getFileName('sooqr', $storeId);
-        $config['file_path'] = Mage::getBaseDir() . DS . 'media' . DS . 'sooqr';
-        $config['file_url'] = $websiteUrl . 'sooqr' . DS . $config['file_name'];
+        if (Mage::getStoreConfig('sooqr_connect/generate/paging', $storeId)) {
+            $config['limit'] = Mage::getStoreConfig('sooqr_connect/generate/limit', $storeId);
+        } else {
+            $config['limit'] = '';
+        }
+
+        if ($type == 'preview') {
+            $config['limit'] = 100;
+        }
 
         return $config;
     }
@@ -263,7 +343,11 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             }
         }
 
-        return Mage::helper('sooqr')->addAttributeData($attributes, $config);
+        if ($type != 'config') {
+            return $this->helper->addAttributeData($attributes, $config);
+        } else {
+            return $attributes;
+        }
     }
 
     /**
@@ -274,75 +358,44 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
      * @param $prices
      * @param $io
      *
-     * @return array
+     * @return int
      */
-    public function getFeedData($products, $config, $parentAttributes, $prices, $io, $timeStart)
+    public function getFeedData($products, $parents, $config, $parentAttributes, $prices, $io, $parentRelations)
     {
-        $feedStats = array();
-        $helper = Mage::helper('sooqr');
         $qty = 0;
 
         foreach ($products as $product) {
-            if ($parentId = $helper->getParentData($product, $config)) {
-                $parent = $products->getItemById($parentId);
-            } else {
-                $parent = '';
+            $parent = null;
+            if (!empty($parentRelations[$product->getEntityId()])) {
+                foreach ($parentRelations[$product->getEntityId()] as $parentId) {
+                    if ($parent = $parents->getItemById($parentId)) {
+                        continue;
+                    }
+                }
             }
 
-            $productData = $helper->getProductDataRow($product, $config, $parent, $parentAttributes);
+            $productData = $this->helper->getProductDataRow($product, $config, $parent, $parentAttributes);
 
             if ($productData) {
+                $productRow = array();
                 foreach ($productData as $key => $value) {
                     if (!is_array($value)) {
                         $productRow[$key] = $value;
                     }
                 }
 
-                if (!empty($parent)) {
-                    $sAtts = $this->getSuperAtts($parent);
-                } else {
-                    $sAtts = '';
-                }
-
-                if ($extraData = $this->getExtraDataFields($productData, $config, $product, $sAtts, $parent, $prices)) {
+                if ($extraData = $this->getExtraDataFields($productData, $config, $product,$prices)) {
                     $productRow = array_merge($productRow, $extraData);
                 }
 
-                $helper->writeRow($productRow, $io, 'product');
-                unset($productRow);
+                $this->helper->writeRow($productRow, $io);
+
+                $productRow = null;
                 $qty++;
             }
         }
 
-        if ($cmsPages = $this->getCmspages($config)) {
-            foreach ($cmsPages as $item) {
-                $helper->writeRow($item, $io, 'product');
-            }
-        }
-
-        $summary = $this->getFeedResults($timeStart, $qty, $config['limit']);
-        $helper->writeRow($summary, $io, 'results');
-
-        $feedStats['qty'] = $qty;
-        $feedStats['date'] = date("Y-m-d H:i:s", Mage::getModel('core/date')->timestamp(time()));
-        $feedStats['url'] = $config['file_url'];
-        $feedStats['shop'] = Mage::app()->getStore($config['store_id'])->getCode();
-
-        return $feedStats;
-    }
-
-    /**
-     * @param $parent
-     *
-     * @return mixed
-     */
-    public function getSuperAtts($parent)
-    {
-        if ($parent->getTypeId() == 'configurable') {
-            return $parent->getTypeInstance(true)->getConfigurableAttributesAsArray($parent);
-        }
-
-        return false;
+        return $qty;
     }
 
     /**
@@ -612,19 +665,4 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         return $cmspages;
     }
 
-    /**
-     * @param $storeId
-     */
-    public function setMemoryLimit($storeId)
-    {
-        if (Mage::getStoreConfig('sooqr_connect/generate/overwrite', $storeId)) {
-            if ($memoryLimit = Mage::getStoreConfig('sooqr_connect/generate/memory_limit', $storeId)) {
-                ini_set('memory_limit', $memoryLimit);
-            }
-
-            if ($maxExecutionTime = Mage::getStoreConfig('sooqr_connect/generate/max_execution_time', $storeId)) {
-                ini_set('max_execution_time', $maxExecutionTime);
-            }
-        }
-    }
 }

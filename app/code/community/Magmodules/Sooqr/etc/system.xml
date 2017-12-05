@@ -570,28 +570,64 @@
                             <show_in_store>1</show_in_store>
                             <comment><![CDATA[sqoor-datatfeed.xml]]></comment>
                         </filename>
-                        <limit translate="label">
-                            <label>Limit Products</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>13</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[Set limit for testing, use 0 for all products]]></comment>
-                        </limit>
-                        <server_heading translate="label">
-                            <label>Overwrite server settings</label>
+                        <advanced_heading translate="label">
+                            <label>Advanced</label>
                             <frontend_model>sooqr/adminhtml_system_config_form_field_heading</frontend_model>
                             <sort_order>20</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>0</show_in_store>
-                        </server_heading>
-                        <overwrite translate="label">
-                            <label>Enabled</label>
+                        </advanced_heading>
+                        <paging translate="label">
+                            <label>Paging</label>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
                             <sort_order>21</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[Recommend for big catalogs, e.g. catalogs of 50.000 SKU, use 5000 per page.]]></comment>
+                        </paging>
+                        <limit translate="label">
+                            <label>Limit per Page</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <paging>1</paging>
+                            </depends>
+                            <comment><![CDATA[Use the paging function on big catalogs, e.g. catalogs of 50.000 SKU, you can use 5000 per page.]]></comment>
+                        </limit>
+                        <debug_memory translate="label">
+                            <label>Debug Memory Usage</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>23</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <paging>1</paging>
+                            </depends>
+                            <comment>Write the memory usage to the var/log/sooqr.log file</comment>
+                        </debug_memory>
+                        <bypass_flat translate="label">
+                            <label>Bypass Flat Product Tables</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>24</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[It's not recommended to activate this option in production mode.]]></comment>
+                        </bypass_flat>
+                        <overwrite translate="label">
+                            <label>Overwrite Server Settings</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>25</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -600,7 +636,7 @@
                         <memory_limit translate="label">
                             <label>Memory Limit</label>
                             <frontend_type>text</frontend_type>
-                            <sort_order>22</sort_order>
+                            <sort_order>26</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>0</show_in_store>
@@ -612,7 +648,7 @@
                         <max_execution_time translate="label">
                             <label>Max Execution Time</label>
                             <frontend_type>text</frontend_type>
-                            <sort_order>23</sort_order>
+                            <sort_order>27</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>0</show_in_store>

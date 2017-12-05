@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -18,14 +17,16 @@
  * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Source_Attribute
 {
 
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-
         $optionArray = array();
-
         $attributes = Mage::getResourceModel('catalog/product_attribute_collection')
             ->addVisibleFilter()
             ->addFieldToFilter(
@@ -33,9 +34,14 @@ class Magmodules_Sooqr_Model_Source_Attribute
                 array('text', 'select', 'textarea', 'date', 'int', 'boolean', 'static', 'varchar')
             );
 
-        // Some Default Attributes
-        $optionArray[] = array('label' => Mage::helper('sooqr')->__('- Product ID'), 'value' => 'entity_id');
-        $optionArray[] = array('label' => Mage::helper('sooqr')->__('- Final Price'), 'value' => 'final_price');
+        $optionArray[] = array(
+            'label' => Mage::helper('sooqr')->__('- Product ID'),
+            'value' => 'entity_id'
+        );
+        $optionArray[] = array(
+            'label' => Mage::helper('sooqr')->__('- Final Price'),
+            'value' => 'final_price'
+        );
 
         foreach ($attributes as $attribute) {
             $optionArray[] = array(

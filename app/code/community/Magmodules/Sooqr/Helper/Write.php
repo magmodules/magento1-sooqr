@@ -90,7 +90,11 @@ class Magmodules_Sooqr_Helper_Write extends Mage_Core_Helper_Abstract
      */
     public function cleanValue($value)
     {
-        return htmlspecialchars($value, ENT_XML1);
+        if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
+            return htmlspecialchars($value, ENT_XML1);
+        } else {
+            return htmlspecialchars($value);
+        }
     }
 
     /**
