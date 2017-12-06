@@ -22,6 +22,9 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter
     extends Mage_Adminhtml_Block_System_Config_Form_Field_Array_Abstract
 {
 
+    /**
+     * @var array
+     */
     protected $_renders = array();
 
     /**

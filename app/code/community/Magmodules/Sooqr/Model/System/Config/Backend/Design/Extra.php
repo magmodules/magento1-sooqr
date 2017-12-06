@@ -22,6 +22,9 @@ class Magmodules_Sooqr_Model_System_Config_Backend_Design_Extra
     extends Mage_Adminhtml_Model_System_Config_Backend_Serialized_Array
 {
 
+    /**
+     *
+     */
     public function _beforeSave()
     {
         $value = $this->getValue();
@@ -51,6 +54,12 @@ class Magmodules_Sooqr_Model_System_Config_Backend_Design_Extra
         parent::_beforeSave();
     }
 
+    /**
+     * @param $data
+     * @param $sort
+     *
+     * @return mixed
+     */
     function orderData($data, $sort)
     {
         $code = "return strnatcmp(\$a['$sort'], \$b['$sort']);";
