@@ -32,87 +32,42 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Feeds
         $helper = Mage::helper('sooqr');
         $storeIds = $helper->getStoreIds('sooqr_connect/generate/enabled');
         $htmlFeedlinks = '';
-
         foreach ($storeIds as $storeId) {
-            $generateUrl = $this->getUrl('*/sooqr/generateFeed/store_id/' . $storeId);
+            $generateUrl = $this->getUrl('*/sooqr/generateManual/store_id/' . $storeId);
+            $previewUrl = $this->getUrl('*/sooqr/preview/store_id/' . $storeId);
             $downloadUrl = $this->getUrl('*/sooqr/download/store_id/' . $storeId);
-            $disableUrl = $this->getUrl('*/sooqr/disableFeed/store_id/' . $storeId);
             $feedText = $helper->getUncachedConfigValue('sooqr_connect/generate/feed_result', $storeId);
-
             if (empty($feedText)) {
-                $feedText = $helper->__('No active feed found');
+                $feedText = Mage::helper('sooqr')->__('No active feed found');
                 $downloadUrl = '';
             }
 
+            $storeTitle = Mage::app()->getStore($storeId)->getName();
+            $storeCode = Mage::app()->getStore($storeId)->getCode();
             $htmlFeedlinks .= '<tr>
-              <td>
-                ' . $helper->__('✓ Enabled') . '
-              </td>
-              <td valign="top">
-                ' . Mage::app()->getStore($storeId)->getName() . '<br/>
-                <small>Code: ' . Mage::app()->getStore($storeId)->getCode() . '</small>
-              </td>
-              <td>
-                ' . $feedText . '
-              </td>
-              <td style="line-height: 25px;">
-                <a style="text-decoration: none;padding-left: 4px;" href="' . $generateUrl . '">
-                  ' . $helper->__('↺ Generate') . '
-                </a>
-                <br/>
-                <a style="text-decoration: none;padding-left: 3px;" href="' . $downloadUrl . '">
-                  ' . $helper->__('➞ Download') . '
-                </a>
-                <br/>
-                <a style="text-decoration: none; padding: 5px;" href="' . $disableUrl . '">
-                  ' . $helper->__('✕ Disable') . '</a>
-                </td>
-            </tr>';
-        }
-
-        $storeIds = $helper->getDisabledStoreIds('sooqr_connect/generate/enabled');
-
-        foreach ($storeIds as $storeId) {
-            $enableUrl = $this->getUrl('*/sooqr/enableFeed/store_id/' . $storeId);
-            $feedText = $helper->__('No active feed found');
-            $htmlFeedlinks .= '<tr>
-              <td>
-                ' . $helper->__('✕ Disabled') . '
-              </td>
-              <td valign="top">
-                ' . Mage::app()->getStore($storeId)->getName() . '
-                <br/>
-                <small>Code: ' . Mage::app()->getStore($storeId)->getCode() . '</small>
-              </td>
-              <td>
-                ' . $feedText . '
-              </td>
-              <td>
-                <a style="text-decoration: none;padding-left: 5px;" href="' . $enableUrl . '">
-                  ' . $helper->__('✓ Enable') . '
-                </a>
-              </td>
+             <td valign="top">' . $storeTitle . '<br/><small>Code: ' . $storeCode . '</small></td>
+             <td>' . $feedText . '</td>
+             <td>
+              » <a href="' . $generateUrl . '">' . Mage::helper('sooqr')->__('Generate New') . '</a><br/>
+              » <a href="' . $previewUrl . '">' . Mage::helper('sooqr')->__('Preview 100') . '</a><br/>
+              » <a href="' . $downloadUrl . '">' . Mage::helper('sooqr')->__('Download Last') . '</a>              
+             </td>
             </tr>';
         }
 
         if (empty($htmlFeedlinks)) {
-            $htmlFeedlinks = $helper->__('No enabled feed(s) found');
+            $htmlFeedlinks = Mage::helper('sooqr')->__('No enabled feed(s) found');
         } else {
             $htmlHeader = '<div class="grid">
              <table cellpadding="0" cellspacing="0" class="border" style="width: 100%">
               <tbody>
-               <tr class="headings">
-                <th>' . $helper->__('Status') . '</th>
-                <th>' . $helper->__('Storeview') . '</th>
-                <th>' . $helper->__('Feed') . '</th>
-                <th>' . $helper->__('Action') . '</th>
-               </tr>';
+               <tr class="headings"><th>Store</th><th>Feed</th><th>Generate</th></tr>';
             $htmlFooter = '</tbody></table></div>';
             $htmlFeedlinks = $htmlHeader . $htmlFeedlinks . $htmlFooter;
         }
 
         return sprintf(
-            '<tr id="row_%s"><td colspan="7" class="label" style="margin-bottom: 10px;">%s</td></tr>',
+            '<tr id="row_%s"><td colspan="6" class="label" style="margin-bottom: 10px;">%s</td></tr>',
             $element->getHtmlId(),
             $htmlFeedlinks
         );

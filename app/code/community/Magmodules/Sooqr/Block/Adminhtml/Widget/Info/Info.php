@@ -79,29 +79,48 @@ class Magmodules_Sooqr_Block_Adminhtml_Widget_Info_Info
 
         $flatProduct = Mage::getStoreConfig('catalog/frontend/flat_catalog_product');
         $flatCategory = Mage::getStoreConfig('catalog/frontend/flat_catalog_category');
-        if ((!$flatProduct) || (!$flatCategory)) {
-            $msg = '<div id="messages"><ul class="messages"><li class="error-msg"><ul><li><span>' . Mage::helper('sooqr')->__('Please enable "Flat Catalog Category" and "Flat Catalog Product" for the extension to work properly. <a href="https://www.magmodules.eu/help/enable-flat-catalog/" target="_blank">More information.</a>') . '</span></li></ul></li></ul></div>';
+        $bypassFlat = Mage::getStoreConfig('sooqr_connect/generate/bypass_flat');
+
+        if ((!$flatProduct || !$flatCategory) && !$bypassFlat) {
+            $msg = '<div id="messages">
+             <ul class="messages">
+              <li class="notice-msg">
+               <ul>
+                <li>
+                 <span>
+                  ' . Mage::helper('sooqr')->__('Note: We recommend to enable the "Flat Catalog Category" and "Flat Catalog Product" to reduce the server load for the feed generation. <a href="https://www.magmodules.eu/help/sooqr/enable-flat-catalog" target="_blank">More information.</a>') . '
+                 </span>
+                </li>
+               </ul>
+              </li>
+             </ul>
+             </div>';
             $html = $html . $msg;
         }
 
-        if (Mage::getStoreConfig('catalog/frontend/flat_catalog_product')) {
+        if (!$bypassFlat && Mage::getStoreConfig('catalog/frontend/flat_catalog_product')) {
             $storeId = Mage::helper('sooqr')->getStoreIdConfig();
-            $nonFlatAttributes = Mage::helper('sooqr')->checkFlatCatalog(
-                Mage::getModel("sooqr/sooqr")->getFeedAttributes(
-                    $storeId,
-                    'flatcheck'
-                )
-            );
+            $atts = Mage::getModel("sooqr/sooqr")->getFeedAttributes('', $storeId, 'flatcheck');
+            $nonFlatAttributes = Mage::helper('sooqr')->checkFlatCatalog($atts);
             if (count($nonFlatAttributes) > 0) {
-                $html .= '<div id="messages"><ul class="messages"><li class="error-msg"><ul><li><span>';
+
+                $msg = 'Note: The following used attribute(s) were not found in the flat catalog: %s. ';
+                $msg .= 'This can result in a higher resource usage which can slow down the feed generation. ';
+                $msg .= 'Click <a target="_blank" href="%s">here</a> to add these to the flat catalog. ';
+                $msg .= 'Or click <a target="_blank" href="%s">here</a> to bypass Flat Catalog.';
+                $msg .= '<span style="float:right"><a target="_blank" href="%s">[Read More]</a></span>';
+
+                $html .= '<div id="messages"><ul class="messages"><li class="notice-msg"><ul><li><span>';
                 $html .= $this->__(
-                    'Warning: The following used attribute(s) were not found in the flat catalog: %s. This can result in empty data or higher resource usage. Click <a href="%s">here</a> to add these to the flat catalog. ',
-                    implode($nonFlatAttributes, ', '), $this->getUrl('*/sooqr/addToFlat')
+                    $msg,
+                    implode($nonFlatAttributes, ', '),
+                    $this->getUrl('*/sooqr/addToFlat'),
+                    $this->getUrl('*/sooqr/bypassFlat'),
+                    'https://www.magmodules.eu/help/sooqr/enable-flat-catalog'
                 );
                 $html .= '</span></ul></li></ul></div>';
             }
         }
-
         return $html;
     }
 

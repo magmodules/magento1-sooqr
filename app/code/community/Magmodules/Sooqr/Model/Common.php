@@ -23,27 +23,48 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
 
     /**
      * @param        $config
-     * @param string $limit
      *
-     * @return mixed
+     * @return Mage_Catalog_Model_Resource_Product_Collection
      */
-    public function getProducts($config, $limit = '')
+    public function getProducts($config)
     {
         $storeId = $config['store_id'];
+        $limit = $config['limit'];
 
-        $collection = Mage::getResourceModel('catalog/product_collection')
-            ->setStore($storeId)
+        if (!empty($config['bypass_flat'])) {
+            $collection = Mage::getModel('sooqr/resource_product_collection');
+        } else {
+            $collection = Mage::getResourceModel('catalog/product_collection');
+        }
+
+        $collection->setStore($storeId)
             ->addStoreFilter($storeId)
             ->addFinalPrice()
             ->addUrlRewrite()
             ->addAttributeToFilter('status', 1);
 
-        if ($limit) {
-            $collection->setPage(1, $limit)->getCurPage();
+        if ($limit > 0) {
+            $collection->setPageSize($limit);
         }
 
-        if (empty($config['conf_enabled'])) {
-            $collection->addAttributeToFilter('visibility', array('in' => array(2, 3, 4)));
+        if (!empty($config['filter_status'])) {
+            $visibility = $config['filter_status'];
+            if (strlen($visibility) > 1) {
+                $visibility = explode(',', $visibility);
+                if ($config['conf_enabled']) {
+                    $visibility[] = '1';
+                }
+
+                $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
+            } else {
+                if (!empty($config['conf_enabled'])) {
+                    $visibility = '1,' . $visibility;
+                    $visibility = explode(',', $visibility);
+                    $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
+                } else {
+                    $collection->addAttributeToFilter('visibility', array('eq' => array($visibility)));
+                }
+            }
         }
 
         if (!empty($config['filter_enabled'])) {
@@ -153,15 +174,22 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             )
         );
 
+        if (!empty($config['hide_no_stock'])) {
+            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
+        }
+
         $collection->getSelect()->group('e.entity_id');
 
         if (!empty($config['filters'])) {
-            $this->addFilters($config['filters'], $collection);
+            $collection = $this->addFilters($config['filters'], $collection);
         }
 
-        return $collection->load();
+        return $collection;
     }
 
+    /**
+     * @return array
+     */
     public function getDefaultAttributes()
     {
         $attributes = array();
@@ -189,6 +217,12 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
         return $attributes;
     }
 
+    /**
+     * @param                                                $filters
+     * @param Mage_Catalog_Model_Resource_Product_Collection $collection
+     *
+     * @return Mage_Catalog_Model_Resource_Product_Collection
+     */
     public function addFilters($filters, $collection)
     {
         $cType = array(
@@ -266,6 +300,61 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                     $collection->addAttributeToFilter($attribute, array($condition => $value));
                     break;
             }
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @param $atts
+     *
+     * @return array
+     */
+    public function getParentAttributeSelection($atts)
+    {
+        $attributes = $this->getDefaultAttributes();
+        foreach ($atts as $attribute) {
+            if (!empty($attribute['parent'])) {
+                if (!empty($attribute['source'])) {
+                    if ($attribute['source'] != 'entity_id') {
+                        $attributes[] = $attribute['source'];
+                    }
+                }
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * @param array $parentRelations
+     * @param array $config
+     *
+     * @return Mage_Catalog_Model_Resource_Product_Collection
+     */
+    public function getParents($parentRelations, $config)
+    {
+
+        if (!empty($config['conf_enabled']) && !empty($parentRelations)) {
+            if (!empty($config['bypass_flat'])) {
+                $collection = Mage::getModel('sooqr/resource_product_collection');
+            } else {
+                $collection = Mage::getResourceModel('catalog/product_collection');
+            }
+
+            $collection->setStore($config['store_id'])
+                ->addStoreFilter($config['store_id'])
+                ->addFinalPrice()
+                ->addUrlRewrite()
+                ->addAttributeToFilter('entity_id', array('in' => array_values($parentRelations)))
+                ->addAttributeToSelect(array_unique($config['parent_att']))
+                ->addAttributeToFilter('status', 1);
+
+            if (!empty($config['hide_no_stock'])) {
+                Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
+            }
+
+            return $collection->load();
         }
     }
 }

@@ -1,12 +1,12 @@
 <?php
 /**
- * Magmodules.eu - http://www.magmodules.eu
+ * Magmodules.eu - http://www.magmodules.eu.
  *
  * NOTICE OF LICENSE
- * This source file is subject to the Open Software License (OSL 3.0)
+ * This source file is subject to the EULA
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
+ * https://www.magmodules.eu/MM-LICENSE.txt
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
  * to info@magmodules.eu so we can send you a copy immediately.
@@ -15,12 +15,13 @@
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
  * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
- * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
 class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Heading
     extends Mage_Adminhtml_Block_Abstract implements Varien_Data_Form_Element_Renderer_Interface
 {
+
 
     /**
      * @param Varien_Data_Form_Element_Abstract $element
@@ -29,11 +30,20 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Heading
      */
     public function render(Varien_Data_Form_Element_Abstract $element)
     {
-        $useContainerId = $element->getData('use_container_id');
-        return sprintf(
-            '<tr class="system-fieldset-sub-head" id="row_%s"><td colspan="5"><h4>%s</h4></td></tr>',
-            $element->getHtmlId(), $element->getLabel()
+        $html = sprintf(
+            '
+            <tr id="row_%s">
+                <td colspan="5">
+                    <h4 id="%s" style="border-bottom: 1px solid #dddddd;padding: 20px 5px 5px 5px;">%s</h4>
+                    <div class="comment">
+                        <span>%s</span>
+                    </div>
+                </td>
+            </tr>',
+            $element->getHtmlId(), $element->getHtmlId(), $element->getLabel(), $element->getComment()
         );
+
+        return $html;
     }
 
 }

@@ -21,6 +21,9 @@
 class Magmodules_Sooqr_Model_Source_Action
 {
 
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
         $position = array();

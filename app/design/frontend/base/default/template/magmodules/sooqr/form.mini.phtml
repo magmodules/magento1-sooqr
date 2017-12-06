@@ -24,25 +24,59 @@ $catalogSearchHelper = $this->helper('catalogsearch');
         <label for="search"><?php echo $this->__('Search:') ?></label>
         <input id="search" type="search" name="<?php echo $catalogSearchHelper->getQueryParamName() ?>" value="<?php echo $catalogSearchHelper->getEscapedQueryText() ?>" class="input-text required-entry" placeholder="<?php echo $this->quoteEscape($this->__('Search entire store here...')) ?>"/>
         <button type="submit" title="<?php echo $this->quoteEscape($this->__('Search')) ?>" class="button search-button">
-            <span><span><?php echo $this->__('Search') ?></span></span></button>
+            <span>
+                <span><?php echo $this->__('Search') ?></span>
+            </span>
+        </button>
     </div>
-    <script type="text/javascript">
-        var _wssq = _wssq || [];
-        _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
-        _wssq.push(['suggest._setPosition', 'screen-middle']);
-        _wssq.push(['suggest._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
-        _wssq.push(['suggest._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
-        <?php if (!$this->isTrackingEnabled()) { ?>
-        _wssq.push(['suggest._disableTracking']);
-        <?php } ?>
-        <?php echo $this->getSooqrJavascript() ?>
-        (function () {
-            var ws = document.createElement('script');
-            ws.type = 'text/javascript';
-            ws.async = true;
-            ws.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + '<?php echo $this->getSooqrScriptUri() ?>';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(ws, s);
-        })();
-    </script>
+    <?php if ($this->multiSearch()) { ?>
+        <script type="text/javascript">
+            var _wssq = _wssq || [];
+            _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
+            _wssq.push(['suggest._setPosition', 'screen-middle']);
+            _wssq.push(['suggest._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
+            _wssq.push(['suggest._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
+            <?php if (!$this->isTrackingEnabled()) { ?>
+            _wssq.push(['suggest._disableTracking']);
+            <?php } ?>
+        </script>
+        <script type="text/javascript">
+            var _wssq = _wssq || [];
+            _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions('second')) ?>}]);
+            _wssq.push(['suggest2._setPosition', 'screen-middle']);
+            _wssq.push(['suggest2._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
+            _wssq.push(['suggest2._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
+            <?php if (!$this->isTrackingEnabled()) { ?>
+            _wssq.push(['suggest2._disableTracking']);
+            <?php } ?>
+            (function () {
+                var ws = document.createElement('script');
+                ws.type = 'text/javascript';
+                ws.async = true;
+                ws.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + '<?php echo $this->getSooqrScriptUri() ?>';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(ws, s);
+            })();
+        </script>
+    <?php } else { ?>
+        <script type="text/javascript">
+            var _wssq = _wssq || [];
+            _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
+            _wssq.push(['suggest._setPosition', 'screen-middle']);
+            _wssq.push(['suggest._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
+            _wssq.push(['suggest._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
+            <?php if (!$this->isTrackingEnabled()) { ?>
+            _wssq.push(['suggest._disableTracking']);
+            <?php } ?>
+            <?php echo $this->getSooqrJavascript() ?>
+            (function () {
+                var ws = document.createElement('script');
+                ws.type = 'text/javascript';
+                ws.async = true;
+                ws.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + '<?php echo $this->getSooqrScriptUri() ?>';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(ws, s);
+            })();
+        </script>
+    <?php } ?>
 </form>

@@ -22,40 +22,66 @@ class Magmodules_Sooqr_Model_Observer
 {
 
     /**
-     * @param $schedule
+     * @var Magmodules_Sooqr_Helper_Data
      */
-    public function scheduledGenerateSooqr($schedule)
-    {
-        $enabled = Mage::getStoreConfig('sooqr_connect/general/enabled');
-        $cron = Mage::getStoreConfig('sooqr_connect/generate/cron');
-        $nextStore = Mage::helper('sooqr')->getUncachedConfigValue('sooqr_connect/generate/cron_next');
-        $storeIds = Mage::helper('sooqr')->getStoreIds('sooqr_connect/generate/enabled');
-        $nrStores = count($storeIds);
+    public $helper;
 
-        if ($enabled && $cron && ($nrStores > 0)) {
-            if (empty($nextStore) || ($nextStore >= $nrStores)) {
+    /**
+     * @var Mage_Core_Model_Config
+     */
+    public $config;
+
+    /**
+     * @var Magmodules_Sooqr_Model_Sooqr
+     */
+    public $feed;
+
+    /**
+     * Magmodules_Sooqr_Model_Sooqr constructor.
+     */
+    public function __construct()
+    {
+        $this->helper = Mage::helper('sooqr');
+        $this->config = Mage::getModel('core/config');
+        $this->feed = Mage::getModel('sooqr/sooqr');
+    }
+
+    /**
+     *
+     */
+    public function scheduledGenerateSooqr()
+    {
+        $storeIds = $this->helper->getStoreIds('sooqr_connect/generate/enabled');
+        $cron = Mage::getStoreConfig('sooqr_connect/generate/cron');
+
+        if ($cron & count($storeIds)) {
+            $nextStore = $this->helper->getUncachedConfigValue('sooqr_connect/generate/cron_next');
+            if (empty($nextStore) || ($nextStore >= count($storeIds))) {
                 $nextStore = 0;
             }
 
             $storeId = $storeIds[$nextStore];
             $timeStart = microtime(true);
+
+            /** @var Mage_Core_Model_App_Emulation $appEmulation */
             $appEmulation = Mage::getSingleton('core/app_emulation');
             $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
-            $config = Mage::getModel('core/config');
-            if ($result = Mage::getModel('sooqr/sooqr')->generateFeed($storeId, $timeStart)) {
-                $html = '<a href="' . $result['url'] . '" target="_blank">' . $result['url'] . '</a>
-                <br/>
-                <small>
-                    Date: ' . $result['date'] . ' (cron) - 
-                    Products: ' . $result['qty'] . ' - 
-                    Time: ' . number_format((microtime(true) - $timeStart), 4) . '
-                </small>';
-                $config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
+
+            if ($result = $this->feed->generateFeed($storeId)) {
+                $html = sprintf(
+                    '<a href="%s" target="_blank">%s</a><br/><small>On: %s (cron) - Products: %s/%s - Time: %s</small>',
+                    $result['url'],
+                    $result['url'],
+                    $result['date'],
+                    $result['qty'],
+                    $result['pages'],
+                    $this->helper->getTimeUsage($timeStart)
+                );
+                $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
             }
 
-            $config->saveConfig('sooqr_connect/generate/cron_next', ($nextStore + 1), 'default', 0);
+            $this->config->saveConfig('sooqr_connect/generate/cron_next', ($nextStore + 1), 'default', 0);
             $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
         }
     }
-
 }

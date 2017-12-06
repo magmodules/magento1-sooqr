@@ -29,7 +29,6 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Note
      */
     public function render(Varien_Data_Form_Element_Abstract $element)
     {
-        $useContainerId = $element->getData('use_container_id');
         return sprintf(
             '<tr id="row_%s"><td colspan="5" class="label" style="margin-bottom: 10px;">%s</td></tr>',
             $element->getHtmlId(), $element->getLabel()
