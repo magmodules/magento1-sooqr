@@ -1,0 +1,19 @@
+{
+  "name": "magmodules/magento1-sooqr",
+  "type": "magento-module",
+  "description": "Magento 1 Sooqr integration",
+  "version": "v1.2.2",
+  "keywords": [
+    "magento","sooqr","search"
+  ],
+  "homepage": "https://github.com/magmodules/magento1-sooqr",
+  "license": "OSL-3.0",
+  "authors": [
+    {
+      "name": "Magmodules"
+    }
+  ],
+  "require": {
+    "php": ">5.6.0"
+  }
+}
