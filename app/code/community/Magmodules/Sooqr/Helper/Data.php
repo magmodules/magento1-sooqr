@@ -34,7 +34,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         $storeIds = array();
         foreach (Mage::app()->getStores() as $store) {
             $storeId = $store->getId();
-            if ($this->getUncachedConfigValue($path, $storeId)) {
+            if (Mage::getStoreConfig($path, $storeId)) {
                 $storeIds[] = $storeId;
             }
         }
@@ -58,24 +58,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         return $collection->getFirstItem()->getValue();
-    }
-
-    /**
-     * @param $path
-     *
-     * @return array
-     */
-    public function getDisabledStoreIds($path)
-    {
-        $storeIds = array();
-        foreach (Mage::app()->getStores() as $store) {
-            $storeId = $store->getId();
-            if (!$this->getUncachedConfigValue($path, $storeId)) {
-                $storeIds[] = $storeId;
-            }
-        }
-
-        return $storeIds;
     }
 
     /**
