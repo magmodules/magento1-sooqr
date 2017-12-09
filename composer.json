@@ -2,7 +2,7 @@
   "name": "magmodules/magento1-sooqr",
   "type": "magento-module",
   "description": "Magento 1 Sooqr integration",
-  "version": "v1.2.2",
+  "version": "v1.2.3",
   "keywords": [
     "magento","sooqr","search"
   ],
