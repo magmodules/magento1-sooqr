@@ -54,7 +54,7 @@ class Magmodules_Sooqr_Model_Observer
         $storeIds = $this->helper->getStoreIds('sooqr_connect/generate/enabled');
         $cron = Mage::getStoreConfig('sooqr_connect/generate/cron');
 
-        if ($cron & count($storeIds)) {
+        if ($cron && count($storeIds)) {
             $nextStore = $this->helper->getUncachedConfigValue('sooqr_connect/generate/cron_next');
             if (empty($nextStore) || ($nextStore >= count($storeIds))) {
                 $nextStore = 0;
