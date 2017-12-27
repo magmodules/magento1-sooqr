@@ -4,3 +4,4 @@ app/locale/en_US/Magmodules_Sooqr.csv            app/locale/en_US/Magmodules_Soo
 app/locale/nl_NL/Magmodules_Sooqr.csv            app/locale/nl_NL/Magmodules_Sooqr.csv
 app/design/frontend/base/default/layout/magmodules_sooqr.xml            app/design/frontend/base/default/layout/magmodules_sooqr.xml
 app/design/frontend/base/default/template/magmodules/sooqr/form.mini.phtml            app/design/frontend/base/default/template/magmodules/sooqr/form.mini.phtml
+shell/sooqr.php            shell/sooqr.php

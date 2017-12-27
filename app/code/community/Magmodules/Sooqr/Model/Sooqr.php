@@ -63,6 +63,10 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             $products->setCurPage($curPage);
             $products->load();
 
+            if ($config['reviews']) {
+                Mage::getModel('review/review')->appendSummary($products);
+            }
+
             $parentRelations = $this->helper->getParentsFromCollection($products, $config);
             $parents = $this->getParents($parentRelations, $config);
             $prices = $this->helper->getTypePrices($config, $parents);
@@ -125,10 +129,8 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
     public function getFeedConfig($storeId, $type = 'xml')
     {
         $config = array();
-
-        $store = Mage::app()->getStore($storeId);
+        $store = Mage::getModel('core/store')->load($storeId);
         $website = Mage::getModel('core/website')->load($store->getWebsiteId());
-        $websiteUrl = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
 
         $config['store_id'] = $storeId;
         $config['website_name'] = $this->helper->cleanData($website->getName(), 'striptags');
@@ -142,11 +144,12 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $config['image_resize'] = Mage::getStoreConfig('sooqr_connect/products/image_resize', $storeId);
         $config['file_name'] = $this->getFileName('sooqr', $storeId);
         $config['file_path'] = Mage::getBaseDir() . DS . 'media' . DS . 'sooqr';
-        $config['file_url'] = $websiteUrl . 'sooqr' . DS . $config['file_name'];
+        $config['file_url'] = $config['media_url'] . 'sooqr' . DS . $config['file_name'];
         $config['version'] = (string)Mage::getConfig()->getNode()->modules->Magmodules_Sooqr->version;
         $config['filter_enabled'] = Mage::getStoreConfig('sooqr_connect/products/category_enabled', $storeId);
         $config['filter_cat'] = Mage::getStoreConfig('sooqr_connect/products/categories', $storeId);
         $config['filter_type'] = Mage::getStoreConfig('sooqr_connect/products/category_type', $storeId);
+        $config['reviews'] = Mage::getStoreConfig('sooqr_connect/products/reviews');
         $config['cms_pages'] = Mage::getStoreConfig('sooqr_connect/products/cms_pages', $storeId);
         $config['cms_include'] = Mage::getStoreConfig('sooqr_connect/products/cms_include', $storeId);
         $config['filters'] = @unserialize(Mage::getStoreConfig('sooqr_connect/products/advanced', $storeId));
@@ -163,10 +166,10 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $config['simple_price'] = Mage::getStoreConfig('sooqr_connect/products/simple_price', $storeId);
         $config['force_tax'] = Mage::getStoreConfig('sooqr_connect/products/force_tax', $storeId);
         $config['price_rules'] = true;
-        $config['currency'] = Mage::app()->getStore($storeId)->getCurrentCurrencyCode();
+        $config['currency'] = $store->getCurrentCurrencyCode();
         $config['currency_allow'] = Mage::getStoreConfig('currency/options/allow', $storeId);
         $config['hide_currency'] = true;
-        $config['base_currency_code'] = Mage::app()->getStore($storeId)->getBaseCurrencyCode();
+        $config['base_currency_code'] = $store->getBaseCurrencyCode();
         $config['currency_data'] = $this->getCurrencies($storeId, $config['base_currency_code'], $config['currency']);
         $config['conf_enabled'] = Mage::getStoreConfig('sooqr_connect/products/conf_enabled', $storeId);
         $config['conf_fields'] = Mage::getStoreConfig('sooqr_connect/products/conf_fields', $storeId);
@@ -425,6 +428,10 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             $extraDataFields = array_merge($extraDataFields, $stockData);
         }
 
+        if ($reviewData = $this->getReviewData($config, $product)) {
+            $extraDataFields = array_merge($extraDataFields, $reviewData);
+        }
+
         return $extraDataFields;
     }
 
@@ -527,7 +534,7 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             $assocId['assoc_id'] = $data['id'];
         }
 
-        if ($data['product_object_type'] != 'simple') {
+        if (isset($data['product_object_type']) && $data['product_object_type'] != 'simple') {
             $assocId['is_parent'] = '1';
         } else {
             $assocId['is_parent'] = '0';
@@ -558,6 +565,22 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         }
 
         return $stockData;
+    }
+
+    /**
+     * @param $config
+     * @param $product
+     *
+     * @return array
+     */
+    public function getReviewData($config, $product)
+    {
+        $reviewData = array();
+        if ($config['reviews'] && $ratingSummary = $product->getRatingSummary()) {
+            $reviewData['rating'] = $ratingSummary->getRatingSummary();
+        }
+
+        return $reviewData;
     }
 
     /**
@@ -603,7 +626,8 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $json['search']['enabled'] = '0';
         $storeIds = Mage::helper('sooqr')->getStoreIds('sooqr_connect/generate/enabled');
         foreach ($storeIds as $storeId) {
-            $mediaUrl = Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+            $store = Mage::getModel('core/store')->load($storeId);
+            $mediaUrl = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
             if (!$fileName = Mage::getStoreConfig('sooqr_connect/generate/filename', $storeId)) {
                 $fileName = 'soorq.xml';
             }
@@ -614,7 +638,7 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
                 $fileName = substr($fileName, 0, -4) . '-' . $storeId . '.xml';
             }
 
-            $name = Mage::app()->getStore($storeId)->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK);
+            $name = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK);
             $name = str_replace(array('https://', 'http://', 'www'), '', $name);
 
             $json['feeds'][$storeId]['name'] = $name;
