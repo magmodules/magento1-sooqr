@@ -111,7 +111,7 @@ class Sooqr_Shell_GenerateFeed extends Mage_Shell_Abstract
     {
         return <<<USAGE
 Usage:  php -f sooqr.php -- [options]
-  --generate          Generate all stores
+  --generate all      Generate all stores
   --generate next     Generate next available store     
   --generate <id>     Generate store <id> (comma seperated supported)
 USAGE;
