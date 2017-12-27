@@ -34,6 +34,7 @@
 "Exclude for Sooqr","Exclude for Sooqr"
 "Extension Version","Extension Version"
 "Extention needs to be enabled to use this function","Extension needs to be enabled to use this function"
+"Export the product rating score in the feed to use it in Sooqr Search. Please keep in mind that activating this option can cause a higher load on the feed generation.","Export the product rating score in the feed to use it in Sooqr Search. Please keep in mind that activating this option can cause a higher load on the feed generation."
 "Feed Generation","Feed Generation"
 "Feed Generation Settings","Feed Generation Settings"
 "File writing not succeeded","File writing not succeeded"
