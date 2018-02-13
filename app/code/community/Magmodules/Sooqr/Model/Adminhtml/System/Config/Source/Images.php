@@ -15,37 +15,42 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Images
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->addFieldToFilter(
-            'frontend_input',
-            'media_image'
-        );
-        $type = array();
-        foreach ($attributes as $attribute) {
-            if ($attribute->getData('attribute_code') == 'small_image') {
-                $type[] = array(
-                    'value' => $attribute->getData('attribute_code'),
-                    'label' => str_replace(
-                        "'", "",
-                        $attribute->getData('frontend_label') . ' ' . Mage::helper('sooqr')->__('(recommended)')
-                    )
-                );
-            } else {
-                $type[] = array(
+        if (!$this->options) {
+            $attributes = Mage::getResourceModel('catalog/product_attribute_collection')
+                ->addFieldToFilter('frontend_input', 'media_image');
+
+            $this->options[] = array(
+                'value' => '',
+                'label' => Mage::helper('sooqr')->__('Use default')
+            );
+
+            foreach ($attributes as $attribute) {
+                $this->options[] = array(
                     'value' => $attribute->getData('attribute_code'),
                     'label' => str_replace("'", "", $attribute->getData('frontend_label'))
                 );
             }
         }
 
-        return $type;
+        return $this->options;
     }
 
 }

@@ -15,19 +15,33 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Condition
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $type = array();
-        $type[] = array('value' => 'new', 'label' => Mage::helper('sooqr')->__('New'));
-        $type[] = array('value' => 'refurbished', 'label' => Mage::helper('sooqr')->__('Refurbished'));
-        $type[] = array('value' => 'used', 'label' => Mage::helper('sooqr')->__('Used'));
-        return $type;
+        if (!$this->options) {
+            $this->options = array(
+                array('value' => 'new', 'label' => Mage::helper('sooqr')->__('New')),
+                array('value' => 'refurbished', 'label' => Mage::helper('sooqr')->__('Refurbished')),
+                array('value' => 'used', 'label' => Mage::helper('sooqr')->__('Used')),
+            );
+        }
+
+        return $this->options;
     }
 
 }

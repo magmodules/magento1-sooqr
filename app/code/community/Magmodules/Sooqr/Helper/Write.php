@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -25,6 +25,7 @@ class Magmodules_Sooqr_Helper_Write extends Mage_Core_Helper_Abstract
      * @param $config
      *
      * @return Varien_Io_File
+     * @throws Exception
      */
     public function createFeed($config)
     {
@@ -59,7 +60,7 @@ class Magmodules_Sooqr_Helper_Write extends Mage_Core_Helper_Abstract
      */
     public function getXmlFromArray($data, $type)
     {
-        $outputEmpty = array();
+        $outputEmpty = array('stock','is_in_stock');
         $xml = '  <' . $type . '>' . PHP_EOL;
         foreach ($data as $key => $value) {
             if (is_array($value)) {

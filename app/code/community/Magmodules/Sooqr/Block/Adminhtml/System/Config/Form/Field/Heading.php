@@ -14,14 +14,13 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
 class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Heading
     extends Mage_Adminhtml_Block_Abstract implements Varien_Data_Form_Element_Renderer_Interface
 {
-
 
     /**
      * @param Varien_Data_Form_Element_Abstract $element

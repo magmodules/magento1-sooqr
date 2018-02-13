@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
@@ -32,10 +32,10 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     public function getStoreIds($path)
     {
         $storeIds = array();
-        foreach (Mage::app()->getStores() as $store) {
-            $storeId = $store->getId();
-            if (Mage::getStoreConfig($path, $storeId)) {
-                $storeIds[] = $storeId;
+        $stores = Mage::getModel('core/store')->getCollection();
+        foreach ($stores as $store) {
+            if (Mage::getStoreConfig($path, $store->getId())) {
+                $storeIds[] = $store->getId();
             }
         }
 
@@ -70,6 +70,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function getProductDataRow($product, $config, $parent, $parentAttributes)
     {
+
         $fields = $config['field'];
         $data = array();
 
@@ -112,9 +113,9 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param Mage_Catalog_Model_Product         $product
-     * @param                                    $config
-     * @param         Mage_Catalog_Model_Product $parent
+     * @param Mage_Catalog_Model_Product $product
+     * @param                            $config
+     * @param Mage_Catalog_Model_Product $parent
      *
      * @return bool
      */
@@ -171,10 +172,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      *
      * @return mixed
      */
-
     public function getAttributeValue($field, $product, $config, $actions = '', $parent, $parentAttributes)
     {
-
         $data = $config['field'][$field];
         $productData = $product;
 
@@ -201,9 +200,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 break;
             case 'availability':
                 $value = $this->getProductAvailability($productData, $config);
-                break;
-            case 'weight':
-                $value = $this->getProductWeight($productData, $config);
                 break;
             case 'price':
                 $value = $this->getProductPrice($productData, $config);
@@ -259,10 +255,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             return $dataRow;
         }
 
-        if (!empty($value) || is_numeric($value)) {
-            $dataRow[$data['label']] = $value;
-            return $dataRow;
-        }
+        $dataRow[$data['label']] = $value;
+        return $dataRow;
     }
 
     /**
@@ -359,7 +353,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                     $mediaData = $product->getData($mediaAtt);
                     if (!empty($mediaData)) {
                         if ($mediaData != 'no_selection') {
-                            $image = $config['media_image_url'] . $this->checkImagePath($mediaData);
+                            $image = $this->checkImagePath($mediaData, $config['media_image_url']);
                             $imageData['image'][$mediaAtt] = $image;
                         }
                     }
@@ -367,21 +361,21 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             } else {
                 if ($product->getThumbnail()) {
                     if ($product->getThumbnail() != 'no_selection') {
-                        $image = $config['media_image_url'] . $this->checkImagePath($product->getThumbnail());
+                        $image = $this->checkImagePath($product->getThumbnail(), $config['media_image_url']);
                         $imageData['image']['thumbnail'] = $image;
                     }
                 }
 
                 if ($product->getSmallImage()) {
                     if ($product->getSmallImage() != 'no_selection') {
-                        $image = $config['media_image_url'] . $this->checkImagePath($product->getSmallImage());
+                        $image = $this->checkImagePath($product->getSmallImage(), $config['media_image_url']);
                         $imageData['image']['small_image'] = $image;
                     }
                 }
 
                 if ($product->getImage()) {
                     if ($product->getImage() != 'no_selection') {
-                        $image = $config['media_image_url'] . $this->checkImagePath($product->getImage());
+                        $image = $this->checkImagePath($product->getImage(), $config['media_image_url']);
                         $imageData['image']['image'] = $image;
                     }
                 }
@@ -408,10 +402,13 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 );
                 foreach ($gallery as $galleryImage) {
                     if ($galleryImage['disabled'] == 0) {
-                        $imageData['image']['all']['image_' . $i] = $config['media_image_url'] . $galleryImage['file'];
-                        $imageData['image']['last'] = $config['media_image_url'] . $galleryImage['file'];
+                        $imageData['image']['all']['image_' . $i] =  $this->checkImagePath($galleryImage['file'],
+                            $config['media_image_url']);
+                        $imageData['image']['last'] =$this->checkImagePath($galleryImage['file'],
+                            $config['media_image_url']);
                         if ($i == 1) {
-                            $imageData['image']['first'] = $config['media_image_url'] . $galleryImage['file'];
+                            $imageData['image']['first'] = $this->checkImagePath($galleryImage['file'],
+                                $config['media_image_url']);
                         }
 
                         $i++;
@@ -420,8 +417,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
                 return $imageData;
             } else {
-                if (!empty($imageData['image']['image'])) {
-                    return $imageData['image']['image'];
+                 if (!empty($imageData['image'][$config['image_source']])) {
+                    return $imageData['image'][$config['image_source']];
                 } else {
                     return $image;
                 }
@@ -431,16 +428,21 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
     /**
      * @param $path
+     * @param $mediaUrl
      *
      * @return string
      */
-    public function checkImagePath($path)
+    public function checkImagePath($path, $mediaUrl)
     {
-        if ($path[0] != '/') {
-            return '/' . $path;
+        if (substr($path, 0, 4) === 'http') {
+            return $path;
         }
 
-        return $path;
+        if ($path[0] != '/') {
+            return $mediaUrl . '/' . $path;
+        } else {
+            return $mediaUrl . $path;
+        }
     }
 
     /**
@@ -470,7 +472,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      * @param Mage_Catalog_Model_Product $product
      * @param                            $config
      *
-     * @return mixed
+     * @return bool
      */
     public function getProductAvailability($product, $config)
     {
@@ -501,25 +503,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      * @param Mage_Catalog_Model_Product $product
      * @param                            $config
      *
-     * @return string
-     */
-    public function getProductWeight($product, $config)
-    {
-        if (!empty($config['weight'])) {
-            $weight = (float)$product->getWeight();
-            $weight = number_format($weight, 2, '.', '');
-            if (isset($config['weight_units'])) {
-                $weight = $weight . ' ' . $config['weight_units'];
-            }
-
-            return $weight;
-        }
-    }
-
-    /**
-     * @param Mage_Catalog_Model_Product $product
-     * @param                            $config
-     *
      * @return array
      */
     public function getProductPrice($product, $config)
@@ -535,12 +518,14 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         if (!empty($config['price_scope'])) {
-            $price = Mage::getResourceModel('catalog/product')->getAttributeRawValue(
-                $product->getId(), 'price',
-                $config['store_id']
-            );
+            $price = Mage::getResourceModel('catalog/product')
+                ->getAttributeRawValue($product->getId(), 'price', $config['store_id']);
         } else {
             $price = $product->getPrice();
+        }
+
+        if ($price == 0) {
+            $price = $product->getMinPrice();
         }
 
         $price = Mage::helper('tax')->getPrice($product, $price, $taxParam);
@@ -553,7 +538,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             $specialPriceToDate = $product->getSpecialToDate();
             $today = time();
             if ($today >= strtotime($specialPriceFromDate)) {
-                if ($today <= strtotime($specialPriceToDate) || is_null($specialPriceToDate)) {
+                if ($today <= strtotime($specialPriceToDate) || empty($specialPriceToDate)) {
                     $priceData['sales_date_start'] = $specialPriceFromDate;
                     $priceData['sales_date_end'] = $specialPriceToDate;
                 }
@@ -574,12 +559,18 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             }
         }
 
-        if ($price == 0) {
-            $price = $product->getMinPrice();
-        }
-
         $priceData['final_price_clean'] = $price;
         $priceData['price'] = number_format(($price * $priceMarkup), 2, '.', '') . $currency;
+
+        if ($product->getMinPrice() !== null) {
+            $minPrice = Mage::helper('tax')->getPrice($product, $product->getMinPrice(), $taxParam);
+            $priceData['min_price'] = number_format(($minPrice * $priceMarkup), 2, '.', '') . $currency;
+        }
+
+        if ($product->getMaxPrice() !== null) {
+            $maxPrice = Mage::helper('tax')->getPrice($product, $product->getMaxPrice(), $taxParam);
+            $priceData['max_price'] = number_format(($maxPrice * $priceMarkup), 2, '.', '') . $currency;
+        }
 
         if (isset($salesPrice)) {
             $priceData['sales_price'] = number_format(($salesPrice * $priceMarkup), 2, '.', '') . $currency;
@@ -601,11 +592,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         if ($config['base_currency_code'] != $config['currency']) {
-            $exchangeRate = Mage::helper('directory')->currencyConvert(
-                1,
-                $config['base_currency_code'],
-                $config['currency']
-            );
+            $exchangeRate = Mage::helper('directory')
+                ->currencyConvert(1, $config['base_currency_code'], $config['currency']);
             $markup = ($markup * $exchangeRate);
         }
 
@@ -652,7 +640,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      * @param        Mage_Catalog_Model_Product $product
      * @param string                            $pricemodel
      *
-     * @return mixed|number
+     * @return bool|mixed|number
      */
     public function getPriceGrouped($product, $pricemodel = '')
     {
@@ -660,26 +648,30 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             $pricemodel = 'min';
         }
 
-        if ($pricemodel == 'min') {
-            return $product->getMinPrice();
+        $prices = array();
+        $_associatedProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
+        foreach ($_associatedProducts as $_item) {
+            $priceAssociated = Mage::helper('tax')->getPrice($_item, $_item->getFinalPrice(), true);
+            if ($priceAssociated > 0) {
+                $prices[] = $priceAssociated;
+            }
         }
 
-        if ($pricemodel == 'max') {
-            return $product->getMaxPrice();
-        }
-
-        if ($pricemodel == 'total') {
-            $prices = array();
-            $_associatedProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
-            foreach ($_associatedProducts as $_item) {
-                $priceAssociated = Mage::helper('tax')->getPrice($_item, $_item->getFinalPrice(), true);
-                if ($priceAssociated > 0) {
-                    $prices[] = $priceAssociated;
-                }
+        if (!empty($prices)) {
+            if ($pricemodel == 'min') {
+                return min($prices);
             }
 
-            return array_sum($prices);
+            if ($pricemodel == 'max') {
+                return max($prices);
+            }
+
+            if ($pricemodel == 'total') {
+                return array_sum($prices);
+            }
         }
+
+        return false;
     }
 
     /**
@@ -692,7 +684,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         if ($product->getTypeId() == 'bundle') {
             return 'true';
         }
-
         return false;
     }
 
@@ -718,13 +709,13 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param        $product
-     * @param        $data
-     * @param string $config
+     * @param Mage_Catalog_Model_Product $product
+     * @param                            $data
+     * @param array                      $config
      *
      * @return string
      */
-    public function getProductData($product, $data, $config = '')
+    public function getProductData($product, $data, $config = array())
     {
         $type = $data['type'];
         $source = $data['source'];
@@ -739,13 +730,29 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 }
                 break;
             case 'select':
-                $value = $product->getAttributeText($source);
+                if (!empty($source)) {
+                    $value = $product->getAttributeText($source);
+                }
                 break;
             case 'multiselect':
                 if (is_array($product->getAttributeText($source))) {
-                    $value = implode(',', $product->getAttributeText($source));
+                    $attributetext = implode(',', $product->getAttributeText($source));
                 } else {
-                    $value = $product->getAttributeText($source);
+                    $attributetext = $product->getAttributeText($source);
+                }
+                if (!empty($attributetext)) {
+                    $value = $attributetext;
+                }
+                break;
+            case 'float':
+                if (!empty($source) && isset($product[$source])) {
+                    $value = round(floatval($product[$source]));
+                }
+                break;
+            case 'boolean':
+                $value = 0;
+                if (!empty($source) && isset($product[$source])) {
+                    $value = (int)$product[$source];
                 }
                 break;
             default:
@@ -907,15 +914,29 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         return 0;
     }
 
+    /**
+     * @param $parents
+     * @param $config
+     *
+     * @return array
+     */
     public function getConfigurableAttributesAsArray($parents, $config)
     {
         $configurableAttributes = array();
-        if (!empty($config['conf_switch_urls'])) {
-            foreach ($parents as $parent) {
-                if ($parent->getTypeId() == 'configurable') {
-                    $configurableAttributes[$parent->getEntityId()] = $parent->getTypeInstance(true)
-                        ->getConfigurableAttributesAsArray($parent);
-                }
+
+        if (empty($parents)) {
+            return $configurableAttributes;
+        }
+
+        if (empty($config['conf_switch_urls'])) {
+            return $configurableAttributes;
+
+        }
+
+        foreach ($parents as $parent) {
+            if ($parent->getTypeId() == 'configurable') {
+                $configurableAttributes[$parent->getEntityId()] = $parent->getTypeInstance(true)
+                    ->getConfigurableAttributesAsArray($parent);
             }
         }
 
@@ -941,22 +962,21 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param        $attributes
-     * @param string $config
+     * @param       $attributes
+     * @param array $config
      *
      * @return mixed
      */
-    public function addAttributeData($attributes, $config = '')
+    public function addAttributeData($attributes, $config = array())
     {
         foreach ($attributes as $key => $attribute) {
             $type = (!empty($attribute['type']) ? $attribute['type'] : '');
             $action = (!empty($attribute['action']) ? $attribute['action'] : '');
             $parent = (!empty($attribute['parent']) ? $attribute['parent'] : '');
             if (isset($attribute['source'])) {
-                $attributeModel = Mage::getModel('eav/entity_attribute')->loadByCode(
-                    'catalog_product',
-                    $attribute['source']
-                );
+                $attributeModel = Mage::getModel('eav/entity_attribute')
+                    ->loadByCode('catalog_product', $attribute['source']);
+
                 $type = $attributeModel->getFrontendInput();
             }
 
@@ -989,7 +1009,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     public function getCategoryData($config, $storeId)
     {
         $defaultAttributes = array('entity_id', 'path', 'name', 'level');
-
         $attributes = $defaultAttributes;
 
         if (!empty($config['category_custom'])) {
@@ -1018,17 +1037,31 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         if (empty($e)) {
+            /** @var Mage_Catalog_Model_Resource_Category_Collection $categories */
             $categories = Mage::getModel('catalog/category')
                 ->setStoreId($storeId)
                 ->getCollection()
                 ->addAttributeToSelect($attributes)
                 ->addFieldToFilter('is_active', array('eq' => 1));
         } else {
+            /** @var Mage_Catalog_Model_Resource_Category_Collection $categories */
             $categories = Mage::getModel('catalog/category')
                 ->setStoreId($storeId)
                 ->getCollection()
                 ->addAttributeToSelect($defaultAttributes)
                 ->addFieldToFilter('is_active', array('eq' => 1));
+        }
+
+        if (!empty($config['filter_enabled'])) {
+            $type = $config['filter_type'];
+            $fCategories = explode(',', $config['filter_cat']);
+            if ($type && $fCategories) {
+                if ($type == 'include') {
+                    $categories->addAttributeToFilter('entity_id', array('in' => $fCategories));
+                } else {
+                    $categories->addAttributeToFilter('entity_id', array('nin' => $fCategories));
+                }
+            }
         }
 
         $_categories = array();
@@ -1098,6 +1131,52 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
+     * @param $products
+     * @param $config
+     *
+     * @return array
+     */
+    public function getParentsFromCollection($products, $config)
+    {
+        $ids = array();
+        if (empty($config['conf_enabled'])) {
+            return $ids;
+        }
+
+        foreach ($products as $product) {
+            if ($parentId = $this->getParentData($product)) {
+                $ids[$product->getEntityId()] = $parentId;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param Mage_Catalog_Model_Product $product
+     *
+     * @return array
+     */
+    public function getParentData($product)
+    {
+        if (($product['type_id'] == 'simple')) {
+            $configIds = Mage::getModel('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+            if ($configIds) {
+                return $configIds;
+            }
+
+            $groupIds = Mage::getResourceSingleton('catalog/product_link')->getParentIdsByChild(
+                $product->getId(),
+                Mage_Catalog_Model_Product_Link::LINK_TYPE_GROUPED
+            );
+
+            if ($groupIds) {
+                return $groupIds;
+            }
+        }
+    }
+
+    /**
      * @param $config
      * @param $products
      *
@@ -1108,6 +1187,10 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         $typePrices = array();
         $confEnabled = $config['conf_enabled'];
         $simplePrice = $config['simple_price'];
+
+        if (empty($products)) {
+            return $typePrices;
+        }
 
         if (!empty($confEnabled) && empty($simplePrice)) {
             foreach ($products as $product) {
@@ -1164,9 +1247,9 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param      $price
-     * @param bool $isPercent
-     * @param      $product
+     * @param                                 $price
+     * @param bool                            $isPercent
+     * @param      Mage_Catalog_Model_Product $product
      *
      * @return float|int
      */
@@ -1180,9 +1263,9 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param      $price
-     * @param bool $isPercent
-     * @param      $product
+     * @param                                 $price
+     * @param bool                            $isPercent
+     * @param      Mage_Catalog_Model_Product $product
      *
      * @return float|int
      */
@@ -1216,13 +1299,12 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     public function checkFlatCatalog($attributes)
     {
         $nonFlatAttributes = array();
+        $skipCheck = array('sku', 'category_ids');
         foreach ($attributes as $key => $attribute) {
             if (!empty($attribute['source'])) {
-                if (($attribute['source'] != 'entity_id') && ($attribute['source'] != 'sku')) {
-                    $_attribute = Mage::getModel('eav/entity_attribute')->loadByCode(
-                        'catalog_product',
-                        $attribute['source']
-                    );
+                if (($attribute['source'] != 'entity_id') && !in_array($attribute['source'], $skipCheck)) {
+                    $_attribute = Mage::getModel('eav/entity_attribute')
+                        ->loadByCode('catalog_product', $attribute['source']);
                     if ($_attribute->getUsedInProductListing() == 0) {
                         if ($_attribute->getId()) {
                             $nonFlatAttributes[$_attribute->getId()] = $_attribute->getFrontendLabel();
@@ -1233,6 +1315,23 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         return $nonFlatAttributes;
+    }
+
+    /**
+     * @param $storeId
+     *
+     * @return mixed|string
+     */
+    public function getProductUrlSuffix($storeId)
+    {
+        $suffix = Mage::getStoreConfig('catalog/seo/product_url_suffix', $storeId);
+        if (!empty($suffix)) {
+            if ((strpos($suffix, '.') === false) && ($suffix != '/')) {
+                $suffix = '.' . $suffix;
+            }
+        }
+
+        return $suffix;
     }
 
     /**
@@ -1262,70 +1361,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         }
 
         return $storeId;
-    }
-
-    /**
-     * @param $storeId
-     *
-     * @return string
-     */
-    public function getProductUrlSuffix($storeId)
-    {
-        $suffix = Mage::getStoreConfig('catalog/seo/product_url_suffix', $storeId);
-        if (!empty($suffix)) {
-            if ((strpos($suffix, '.') === false) && ($suffix != '/')) {
-                $suffix = '.' . $suffix;
-            }
-        }
-
-        return $suffix;
-    }
-
-    /**
-     * @param $products
-     * @param $config
-     *
-     * @return array
-     */
-    public function getParentsFromCollection($products, $config)
-    {
-        $ids = array();
-        if (empty($config['conf_enabled'])) {
-            return $ids;
-        }
-
-        foreach ($products as $product) {
-            /** @var Mage_Catalog_Model_Product $product */
-            if ($parentId = $this->getParentData($product)) {
-                $ids[$product->getEntityId()] = $parentId;
-            }
-        }
-
-        return $ids;
-    }
-
-    /**
-     * @param Mage_Catalog_Model_Product $product
-     *
-     * @return array
-     */
-    public function getParentData($product)
-    {
-        if (($product['type_id'] == 'simple')) {
-            $configIds = Mage::getModel('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
-            if ($configIds) {
-                return $configIds;
-            }
-
-            $groupIds = Mage::getResourceSingleton('catalog/product_link')->getParentIdsByChild(
-                $product->getId(),
-                Mage_Catalog_Model_Product_Link::LINK_TYPE_GROUPED
-            );
-
-            if ($groupIds) {
-                return $groupIds;
-            }
-        }
     }
 
     /**

@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -63,25 +63,28 @@ class Magmodules_Sooqr_Model_Observer
             $storeId = $storeIds[$nextStore];
             $timeStart = microtime(true);
 
-            /** @var Mage_Core_Model_App_Emulation $appEmulation */
-            $appEmulation = Mage::getSingleton('core/app_emulation');
-            $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
-
-            if ($result = $this->feed->generateFeed($storeId)) {
-                $html = sprintf(
-                    '<a href="%s" target="_blank">%s</a><br/><small>On: %s (cron) - Products: %s/%s - Time: %s</small>',
-                    $result['url'],
-                    $result['url'],
-                    $result['date'],
-                    $result['qty'],
-                    $result['pages'],
-                    $this->helper->getTimeUsage($timeStart)
-                );
-                $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
+            try {
+                /** @var Mage_Core_Model_App_Emulation $appEmulation */
+                $appEmulation = Mage::getSingleton('core/app_emulation');
+                $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
+                if ($result = $this->feed->generateFeed($storeId)) {
+                    $html = sprintf(
+                        '<a href="%s" target="_blank">%s</a><br/><small>On: %s (cron) - Products: %s/%s - Time: %s</small>',
+                        $result['url'],
+                        $result['url'],
+                        $result['date'],
+                        $result['qty'],
+                        $result['pages'],
+                        $this->helper->getTimeUsage($timeStart)
+                    );
+                    $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
+                }
+                $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
+            } catch (\Exception $e) {
+                Mage::log($e->getMessage());
             }
 
             $this->config->saveConfig('sooqr_connect/generate/cron_next', ($nextStore + 1), 'default', 0);
-            $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
         }
     }
 }

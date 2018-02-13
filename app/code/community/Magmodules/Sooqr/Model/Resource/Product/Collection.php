@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu.
  *
@@ -15,9 +14,10 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
+
 class Magmodules_Sooqr_Model_Resource_Product_Collection extends Mage_Catalog_Model_Resource_Product_Collection
 {
 

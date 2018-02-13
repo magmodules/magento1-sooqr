@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,19 +14,33 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Resize
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $type = array();
-        $type[] = array('value' => '', 'label' => Mage::helper('adminhtml')->__('No'));
-        $type[] = array('value' => 'fixed', 'label' => Mage::helper('adminhtml')->__('Yes, fixed value'));
-        $type[] = array('value' => 'custom', 'label' => Mage::helper('adminhtml')->__('Yes, custom value'));
-        return $type;
-    }
+        if (!$this->options) {
+            $this->options = array(
+                array('value' => '', 'label' => Mage::helper('adminhtml')->__('No')),
+                array('value' => 'fixed', 'label' => Mage::helper('adminhtml')->__('Yes, fixed value')),
+                array('value' => 'custom', 'label' => Mage::helper('adminhtml')->__('Yes, custom value')),
+            );
+        }
 
+        return $this->options;
+    }
 }

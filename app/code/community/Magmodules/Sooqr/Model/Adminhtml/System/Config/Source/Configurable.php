@@ -14,25 +14,41 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Configurable
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $attributes = Mage::getModel("sooqr/sooqr")->getFeedAttributes();
-        $attributesSkip = array('id', 'parent_id', 'price', 'content_type', 'type', 'qty', 'visibility', 'status', 'stock_status');
-        $att = array();
-        foreach ($attributes as $key => $attribute) {
-            if (!in_array($key, $attributesSkip)) {
-                $att[] = array('value' => $key, 'label' => $key);
+        if (!$this->options) {
+            $storeId = Mage::helper('sooqr')->getStoreIdConfig();
+            $attributes = Mage::getModel("sooqr/sooqr")->getFeedAttributes($storeId, 'config');
+            $attributesSkip = array('id', 'parent_id', 'price', 'availability', 'is_in_stock', 'qty', 'status', 'visibility');
+            $att = array();
+            foreach ($attributes as $key => $attribute) {
+                if (!in_array($key, $attributesSkip) && !empty($key)) {
+                    $label = !empty($attribute['label']) ? $attribute['label'] : $key;
+                    $att[$label] = array('value' => $key, 'label' => $label);
+                }
             }
+
+            $this->options = $att;
         }
 
-        return $att;
+        return $this->options;
     }
 
 }

@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -23,16 +23,19 @@ class Magmodules_Sooqr_Adminhtml_SooqrController extends Mage_Adminhtml_Controll
 
     const XPATH_RESULT = 'sooqr_connect/generate/feed_result';
     const XPATH_BYPASSFLAT = 'sooqr_connect/generate/bypass_flat';
+
     /**
      * @var Magmodules_Sooqr_Helper_Data
      */
     public $helper;
-
+    /**
+     * @var Magmodules_Sooqr_Helper_Selftest
+     */
+    public $selftest;
     /**
      * @var Mage_Core_Model_Config
      */
     public $config;
-
     /**
      * @var Magmodules_Sooqr_Model_Sooqr
      */
@@ -44,6 +47,7 @@ class Magmodules_Sooqr_Adminhtml_SooqrController extends Mage_Adminhtml_Controll
     public function _construct()
     {
         $this->helper = Mage::helper('sooqr');
+        $this->selftest = Mage::helper('sooqr/selftest');
         $this->config = Mage::getModel('core/config');
         $this->feed = Mage::getModel('sooqr/sooqr');
     }
@@ -190,6 +194,16 @@ class Magmodules_Sooqr_Adminhtml_SooqrController extends Mage_Adminhtml_Controll
             $this->getResponse()->sendHeaders();
             readfile($filePath);
         }
+    }
+
+    /**
+     *
+     */
+    public function selftestAction()
+    {
+        $results = $this->selftest->runTests();
+        $msg = implode('<br/>', $results);
+        Mage::app()->getResponse()->setBody($msg);
     }
 
     /**
