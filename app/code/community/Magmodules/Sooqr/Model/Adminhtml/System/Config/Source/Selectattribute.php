@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,48 +14,36 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Selectattribute
+    extends Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
 {
 
-    protected $_ignore = array(
-        'ebizmarts_mark_visited',
-        'is_recurring',
-        'links_purchased_separately',
-        'price_view',
-        'status',
-        'tax_class_id',
-        'visibility',
-        'sooqr_condition',
-        'sooqr_exclude',
-        'shipment_type',
-    );
-
-    public function toOptionArray()
+    /**
+     * @return array
+     */
+    public function getBackendTypes()
     {
-        $options = array();
-        $options[] = array('value' => '', 'label' => Mage::helper('sooqr')->__('-- none'));
-        $entityTypeId = Mage::getModel('eav/entity_type')->loadByCode('catalog_product')->getEntityTypeId();
-        $attributes = Mage::getModel('eav/entity_attribute')->getCollection()->addFilter(
-            'entity_type_id',
-            $entityTypeId
-        )->setOrder('attribute_code', 'ASC');
-        foreach ($attributes as $attribute) {
-            if ($attribute->getBackendType() == 'int') {
-                if ($attribute->getFrontendLabel()) {
-                    if (!in_array($attribute->getAttributeCode(), $this->_ignore)) {
-                        $options[] = array(
-                            'value' => $attribute->getAttributeCode(),
-                            'label' => $attribute->getFrontendLabel()
-                        );
-                    }
-                }
-            }
-        }
-
-        return $options;
+        return array('text', 'varchar', 'static');
     }
 
+    /**
+     * @return array
+     */
+    public function getExludeAttributes()
+    {
+        return array(
+            'ebizmarts_mark_visited',
+            'is_recurring',
+            'links_purchased_separately',
+            'price_view',
+            'status',
+            'tax_class_id',
+            'visibility',
+            'shipment_type',
+        );
+    }
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,18 +14,32 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Version
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $type = array();
-        $type[] = array('value' => '4', 'label' => Mage::helper('sooqr')->__('Version 4 (Responsive)'));
-        $type[] = array('value' => '3', 'label' => Mage::helper('sooqr')->__('Version 3 (Original)'));
-        return $type;
-    }
+        if (!$this->options) {
+            $this->options = array(
+                array('value' => '4', 'label' => Mage::helper('sooqr')->__('Version 4 (Responsive)')),
+                array('value' => '3', 'label' => Mage::helper('sooqr')->__('Version 3 (Original)')),
+            );
+        }
 
+        return $this->options;
+    }
 }

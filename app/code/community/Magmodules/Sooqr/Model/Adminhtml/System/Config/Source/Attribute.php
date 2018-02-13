@@ -14,42 +14,21 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute
+    extends Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
+
 {
 
     /**
      * @return array
      */
-    public function toOptionArray()
+    public function getActionsArray()
     {
-        $optionArray = array();
-        $optionArray[] = array('value' => '', 'label' => Mage::helper('sooqr')->__('-- none'));
-        $optionArray[] = array('label' => Mage::helper('sooqr')->__('- Product ID'), 'value' => 'entity_id');
-        $optionArray[] = array('label' => Mage::helper('sooqr')->__('- Final Price'), 'value' => 'final_price');
-        $optionArray[] = array('label' => Mage::helper('sooqr')->__('- Product Type'), 'value' => 'type_id');
-        $backendTypes = array('text', 'select', 'textarea', 'date', 'int', 'boolean', 'static', 'varchar', 'decimal');
-        $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->setOrder(
-            'frontend_label',
-            'ASC'
-        )->addFieldToFilter('backend_type', $backendTypes);
-        foreach ($attributes as $attribute) {
-            if ($attribute->getData('frontend_label')) {
-                $label = str_replace("'", "", $attribute->getData('frontend_label'));
-            } else {
-                $label = str_replace("'", "", $attribute->getData('attribute_code'));
-            }
-
-            $optionArray[] = array(
-                'value' => $attribute->getData('attribute_code'),
-                'label' => $label,
-            );
-        }
-
-        return $optionArray;
+        return array();
     }
 
 }

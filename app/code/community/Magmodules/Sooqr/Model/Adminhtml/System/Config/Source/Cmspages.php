@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,41 +14,53 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Cmspages
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     * @throws Mage_Core_Exception
+     */
     public function toOptionArray()
     {
-        $storeId = '';
-        $cms = array();
-        $code = Mage::app()->getRequest()->getParam('store');
-        if (!empty($code)) {
-            $storeId = Mage::getModel('core/store')->load($code)->getId();
-        } else {
-            $code = Mage::app()->getRequest()->getParam('website');
+        if (!$this->options) {
+            $storeId = '';
+            $code = Mage::app()->getRequest()->getParam('store');
             if (!empty($code)) {
-                $websiteId = Mage::getModel('core/website')->load($code)->getId();
-                $storeId = Mage::app()->getWebsite($websiteId)->getDefaultStore()->getId();
+                $storeId = Mage::getModel('core/store')->load($code)->getId();
+            } else {
+                $code = Mage::app()->getRequest()->getParam('website');
+                if (!empty($code)) {
+                    $websiteId = Mage::getModel('core/website')->load($code)->getId();
+                    $storeId = Mage::app()->getWebsite($websiteId)->getDefaultStore()->getId();
+                }
+            }
+
+            if ($storeId) {
+                $cmspages = Mage::getModel('cms/page')->getCollection()->addStoreFilter($storeId);
+            } else {
+                $cmspages = Mage::getModel('cms/page')->getCollection();
+            }
+
+            foreach ($cmspages as $page) {
+                $this->options[] = array(
+                    'value' => $page->getId(),
+                    'label' => $page->getTitle() . ' (' . $page->getIdentifier() . ')'
+                );
             }
         }
-
-        if ($storeId) {
-            $cmspages = Mage::getModel('cms/page')->getCollection()->addStoreFilter($storeId);
-        } else {
-            $cmspages = Mage::getModel('cms/page')->getCollection();
-        }
-
-        foreach ($cmspages as $page) {
-            $cms[] = array(
-                'value' => $page->getId(),
-                'label' => $page->getTitle() . ' (' . $page->getIdentifier() . ')'
-            );
-        }
-
-        return $cms;
+        return $this->options;
     }
 
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,68 +14,63 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Varcharattribute
+    extends Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
 {
 
-    protected $_ignore = array(
-        'compatibility',
-        'gallery',
-        'installation',
-        'language_support',
-        'country_of_manufacture',
-        'links_title',
-        'current_version',
-        'custom_design',
-        'custom_layout_update',
-        'gift_message_available',
-        'image',
-        'image_label',
-        'media_gallery',
-        'msrp_display_actual_price_type',
-        'msrp_enabled',
-        'options_container',
-        'price_view',
-        'page_layout',
-        'samples_title',
-        'sku_type',
-        'tier_price',
-        'url_key',
-        'small_image',
-        'small_image_label',
-        'thumbnail',
-        'thumbnail_label',
-        'recurring_profile',
-        'version_info',
-        'meta_keyword',
-        'meta_description',
-    );
-
-    public function toOptionArray()
+    /**
+     * @return array
+     */
+    public function getBackendTypes()
     {
-        $options = array();
-        $options[] = array('value' => '', 'label' => Mage::helper('sooqr')->__('-- none'));
-        $entityTypeId = Mage::getModel('eav/entity_type')->loadByCode('catalog_product')->getEntityTypeId();
-        $attributes = Mage::getModel('eav/entity_attribute')->getCollection()->addFilter(
-            'entity_type_id',
-            $entityTypeId
-        )->setOrder('attribute_code', 'ASC');
-        foreach ($attributes as $attribute) {
-            if ($attribute->getBackendType() == 'varchar') {
-                if ($attribute->getFrontendLabel()) {
-                    if (!in_array($attribute->getAttributeCode(), $this->_ignore)) {
-                        $options[] = array(
-                            'value' => $attribute->getAttributeCode(),
-                            'label' => $attribute->getFrontendLabel()
-                        );
-                    }
-                }
-            }
-        }
-
-        return $options;
+        return array('varchar');
     }
 
+    /**
+     * @return array
+     */
+    public function getExludeAttributes()
+    {
+        return array(
+            'compatibility',
+            'gallery',
+            'installation',
+            'language_support',
+            'country_of_manufacture',
+            'links_title',
+            'current_version',
+            'custom_design',
+            'custom_layout_update',
+            'gift_message_available',
+            'image',
+            'image_label',
+            'media_gallery',
+            'msrp_display_actual_price_type',
+            'msrp_enabled',
+            'options_container',
+            'price_view',
+            'page_layout',
+            'samples_title',
+            'sku_type',
+            'tier_price',
+            'url_key',
+            'small_image',
+            'small_image_label',
+            'thumbnail',
+            'thumbnail_label',
+            'recurring_profile',
+            'version_info',
+            'meta_title',
+            'meta_keyword',
+            'category_ids',
+            'has_options',
+            'required_options',
+            'url_path',
+            'updated_at'
+        );
+    }
 }

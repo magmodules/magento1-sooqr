@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
@@ -22,14 +22,16 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
 {
 
     /**
-     * @param        $config
+     * @param $config
      *
      * @return Mage_Catalog_Model_Resource_Product_Collection
+     * @throws Mage_Core_Exception
      */
     public function getProducts($config)
     {
         $storeId = $config['store_id'];
         $limit = $config['limit'];
+        $websiteId = $config['website_id'];
 
         if (!empty($config['bypass_flat'])) {
             $collection = Mage::getModel('sooqr/resource_product_collection');
@@ -37,34 +39,14 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             $collection = Mage::getResourceModel('catalog/product_collection');
         }
 
+        /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
         $collection->setStore($storeId)
             ->addStoreFilter($storeId)
-            ->addFinalPrice()
             ->addUrlRewrite()
             ->addAttributeToFilter('status', 1);
 
         if ($limit > 0) {
             $collection->setPageSize($limit);
-        }
-
-        if (!empty($config['filter_status'])) {
-            $visibility = $config['filter_status'];
-            if (strlen($visibility) > 1) {
-                $visibility = explode(',', $visibility);
-                if ($config['conf_enabled']) {
-                    $visibility[] = '1';
-                }
-
-                $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
-            } else {
-                if (!empty($config['conf_enabled'])) {
-                    $visibility = '1,' . $visibility;
-                    $visibility = explode(',', $visibility);
-                    $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
-                } else {
-                    $collection->addAttributeToFilter('visibility', array('eq' => array($visibility)));
-                }
-            }
         }
 
         if (!empty($config['filter_enabled'])) {
@@ -82,82 +64,31 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             }
         }
 
-        $attributes = $this->getDefaultAttributes();
-
-        if (!empty($config['filter_exclude'])) {
-            $attributes[] = $config['filter_exclude'];
+        if (empty($config['conf_enabled'])) {
+            $collection->addAttributeToFilter('visibility', array('in' => array(2, 3, 4)));
         }
 
-        foreach ($config['field'] as $field) {
-            if (!empty($field['source'])) {
-                $attributes[] = $field['source'];
-            }
+        if (!empty($config['filters'])) {
+            $this->addFilters($config['filters'], $collection);
         }
 
-        if (!empty($config['delivery_att'])) {
-            $attributes[] = $config['delivery_att'];
+        if (!empty($config['hide_no_stock'])) {
+            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
         }
 
-        if (!empty($config['delivery_att_be'])) {
-            $attributes[] = $config['delivery_att_be'];
-        }
-
-        $customValues = '';
-        if (isset($config['custom_name'])) {
-            $customValues .= $config['custom_name'] . ' ';
-        }
-
-        if (isset($config['custom_description'])) {
-            $customValues .= $config['custom_description'] . ' ';
-        }
-
-        preg_match_all("/{{([^}]*)}}/", $customValues, $foundAtts);
-        if (!empty($foundAtts)) {
-            foreach ($foundAtts[1] as $att) {
-                $attributes[] = $att;
-            }
-        }
-
-        if (!empty($config['extra_attributes'])) {
-            foreach ($config['extra_attributes'] as $att) {
-                if (!empty($att['source'])) {
-                    $attributes[] = $att['source'];
-                }
-            }
-        }
-
-        if (!empty($config['size_multiple'])) {
-            $sizeMultiple = explode(',', $config['size_multiple']);
-            foreach ($sizeMultiple as $att) {
-                if (!empty($att)) {
-                    $attributes[] = $att;
-                }
-            }
-        }
-
-        if (!empty($config['size_na_multiple'])) {
-            $sizeMultiple = explode(',', $config['size_na_multiple']);
-            foreach ($sizeMultiple as $att) {
-                if (!empty($att)) {
-                    $attributes[] = $att;
-                }
-            }
-        }
-
-        $collection->addAttributeToSelect(array_unique($attributes));
+        $attributes = $this->getAttributes($config['field']);
+        $collection->addAttributeToSelect($attributes);
 
         $collection->joinTable(
             'cataloginventory/stock_item', 'product_id=entity_id', array(
-                'qty'                       => 'qty',
-                'is_in_stock'               => 'is_in_stock',
-                'manage_stock'              => 'manage_stock',
-                'use_config_manage_stock'   => 'use_config_manage_stock',
-                'min_sale_qty'              => 'min_sale_qty',
-                'qty_increments'            => 'qty_increments',
-                'enable_qty_increments'     => 'enable_qty_increments',
-                'use_config_qty_increments' => 'use_config_qty_increments',
-                'backorders'                => 'backorders',
-                'use_config_backorders'     => 'use_config_backorders',
+                "qty"                       => "qty",
+                "is_in_stock"               => "is_in_stock",
+                "manage_stock"              => "manage_stock",
+                "use_config_manage_stock"   => "use_config_manage_stock",
+                "min_sale_qty"              => "min_sale_qty",
+                "qty_increments"            => "qty_increments",
+                "enable_qty_increments"     => "enable_qty_increments",
+                "use_config_qty_increments" => "use_config_qty_increments"
             )
         )->addAttributeToSelect(
             array(
@@ -168,26 +99,184 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                 'min_sale_qty',
                 'qty_increments',
                 'enable_qty_increments',
-                'use_config_qty_increments',
-                'backorders',
-                'use_config_backorders'
+                'use_config_qty_increments'
             )
         );
 
-        if (!empty($config['hide_no_stock'])) {
-            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
-        }
-
+        $this->joinPriceIndexLeft($collection, $websiteId);
         $collection->getSelect()->group('e.entity_id');
 
         if (!empty($config['filters'])) {
-            $collection = $this->addFilters($config['filters'], $collection);
+            $this->addFilters($config['filters'], $collection);
         }
 
         return $collection;
     }
 
     /**
+     * @param                                                $filters
+     * @param Mage_Catalog_Model_Resource_Product_Collection $collection
+     * @param                                                $type
+     *
+     * @return Mage_Catalog_Model_Resource_Product_Collection
+     */
+    public function addFilters($filters, $collection, $type = 'simple')
+    {
+        $cType = array(
+            'eq'   => '=',
+            'neq'  => '!=',
+            'gt'   => '>',
+            'gteq' => '>=',
+            'lt'   => '<',
+            'lteg' => '<='
+        );
+
+        foreach ($filters as $filter) {
+            $attribute = $filter['attribute'];
+            $condition = $filter['condition'];
+            $value = $filter['value'];
+            $productFilterType = $filter['product_type'];
+            $filterExpr = array();
+
+            if ($type == 'simple' && $productFilterType == 'parent') {
+                continue;
+            }
+
+            if ($type == 'parent' && $productFilterType == 'simple') {
+                continue;
+            }
+
+            $attributeModel = Mage::getSingleton('eav/config')
+                ->getAttribute(Mage_Catalog_Model_Product::ENTITY, $attribute);
+            if (!$frontendInput = $attributeModel->getFrontendInput()) {
+                continue;
+            }
+
+            if ($frontendInput == 'select' || $frontendInput == 'multiselect') {
+                $options = $attributeModel->getSource()->getAllOptions();
+                if (strpos($value, ',') !== false) {
+                    $values = array();
+                    $value = explode(',', $value);
+                    foreach ($value as $v) {
+                        $valueId = array_search(trim($v), array_column($options, 'label'));
+                        if ($valueId) {
+                            $values[] = $options[$valueId]['value'];
+                        }
+                    }
+
+                    $value = implode(',', $values);
+                } else {
+                    $valueId = array_search($value, array_column($options, 'label'));
+                    if ($valueId) {
+                        $value = $options[$valueId]['value'];
+                    }
+                }
+            }
+
+            if ($attribute == 'final_price') {
+                if (isset($cType[$condition])) {
+                    $collection->getSelect()->where('price_index.final_price ' . $cType[$condition] . ' ' . $value);
+                }
+
+                continue;
+            }
+
+            if ($attribute == 'min_sale_qty') {
+                if (isset($cType[$condition])) {
+                    $collection->getSelect()->where('cataloginventory_stock_item.min_sale_qty ' . $cType[$condition] . ' ' . $value);
+                }
+
+                continue;
+            }
+
+            switch ($condition) {
+                case 'nin':
+                    if (strpos($value, ',') !== false) {
+                        $value = explode(',', $value);
+                    }
+
+                    $filterExpr[] = array('attribute' => $attribute, $condition => $value);
+                    $filterExpr[] = array('attribute' => $attribute, 'null' => true);
+                    break;
+                case 'in';
+                    if (strpos($value, ',') !== false) {
+                        $value = explode(',', $value);
+                    }
+
+                    $filterExpr[] = array('attribute' => $attribute, $condition => $value);
+                    break;
+                case 'neq':
+                    $filterExpr[] = array('attribute' => $attribute, $condition => $value);
+                    $filterExpr[] = array('attribute' => $attribute, 'null' => true);
+                    break;
+                case 'empty':
+                    $filterExpr[] = array('attribute' => $attribute, 'null' => true);
+                    break;
+                case 'not-empty':
+                    $filterExpr[] = array('attribute' => $attribute, 'notnull' => true);
+                    break;
+                case 'gt':
+                case 'gteq':
+                case 'lt':
+                case 'lteq':
+                    if (is_numeric($value)) {
+                        $filterExpr[] = array('attribute' => $attribute, $condition => $value);
+                    }
+                    break;
+                default:
+                    $filterExpr[] = array('attribute' => $attribute, $condition => $value);
+                    break;
+            }
+
+            if (!empty($filterExpr)) {
+                if ($productFilterType == 'parent') {
+                    $filterExpr[] = array('attribute' => 'type_id', 'eq' => 'simple');
+                    /** @noinspection PhpParamsInspection */
+                    $collection->addAttributeToFilter($filterExpr, '', 'left');
+                } elseif ($productFilterType == 'simple') {
+                    $filterExpr[] = array('attribute' => 'type_id', 'neq' => 'simple');
+                    /** @noinspection PhpParamsInspection */
+                    $collection->addAttributeToFilter($filterExpr, '', 'left');
+                } else {
+                    /** @noinspection PhpParamsInspection */
+                    $collection->addAttributeToFilter($filterExpr);
+                }
+            }
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @param $selectedAttrs
+     *
+     * @return array
+     */
+    public function getAttributes($selectedAttrs)
+    {
+        $attributes = $this->getDefaultAttributes();
+        foreach ($selectedAttrs as $selectedAtt) {
+            if (!empty($selectedAtt['source'])) {
+                $attributes[] = $selectedAtt['source'];
+            }
+
+            if (!empty($selectedAtt['multi']) && is_array($selectedAtt['multi'])) {
+                foreach ($selectedAtt['multi'] as $attribute) {
+                    $attributes[] = $attribute['source'];
+                }
+            }
+
+            if (!empty($selectedAtt['main'])) {
+                $attributes[] = $selectedAtt['main'];
+            }
+        }
+
+        return array_unique($attributes);
+    }
+
+    /**
+     * Array of default Attributes
+     *
      * @return array
      */
     public function getDefaultAttributes()
@@ -218,91 +307,20 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * @param                                                $filters
-     * @param Mage_Catalog_Model_Resource_Product_Collection $collection
-     *
-     * @return Mage_Catalog_Model_Resource_Product_Collection
+     * @param $collection
+     * @param $websiteId
      */
-    public function addFilters($filters, $collection)
+    public function joinPriceIndexLeft($collection, $websiteId)
     {
-        $cType = array(
-            'eq'   => '=',
-            'neq'  => '!=',
-            'gt'   => '>',
-            'gteq' => '>=',
-            'lt'   => '<',
-            'lteg' => '<='
-        );
-
-        foreach ($filters as $filter) {
-            $attribute = $filter['attribute'];
-            if ($filter['type'] == 'select') {
-                $attribute = $filter['attribute'] . '_value';
-            }
-
-            $condition = $filter['condition'];
-            $value = $filter['value'];
-
-            if ($attribute == 'final_price') {
-                if (isset($cType[$condition])) {
-                    $collection->getSelect()->where('price_index.final_price ' . $cType[$condition] . ' ' . $value);
-                }
-
-                continue;
-            }
-
-            if ($attribute == 'min_sale_qty') {
-                if (isset($cType[$condition])) {
-                    $collection->getSelect()->where('cataloginventory_stock_item.min_sale_qty ' . $cType[$condition] . ' ' . $value);
-                }
-
-                continue;
-            }
-
-            switch ($condition) {
-                case 'nin':
-                    if (strpos($value, ',') !== false) {
-                        $value = explode(',', $value);
-                    }
-
-                    $collection->addAttributeToFilter(
-                        array(
-                            array(
-                                'attribute' => $attribute,
-                                $condition  => $value
-                            ),
-                            array('attribute' => $attribute, 'null' => true)
-                        )
-                    );
-                    break;
-                case 'in';
-                    if (strpos($value, ',') !== false) {
-                        $value = explode(',', $value);
-                    }
-
-                    $collection->addAttributeToFilter($attribute, array($condition => $value));
-                    break;
-                case 'neq':
-                    $collection->addAttributeToFilter(
-                        array(
-                            array('attribute' => $attribute, $condition => $value),
-                            array('attribute' => $attribute, 'null' => true)
-                        )
-                    );
-                    break;
-                case 'empty':
-                    $collection->addAttributeToFilter($attribute, array('null' => true));
-                    break;
-                case 'not-empty':
-                    $collection->addAttributeToFilter($attribute, array('notnull' => true));
-                    break;
-                default:
-                    $collection->addAttributeToFilter($attribute, array($condition => $value));
-                    break;
-            }
-        }
-
-        return $collection;
+        $resource = Mage::getResourceSingleton('core/resource');
+        $tableName = array('price_index' => $resource->getTable('catalog/product_index_price'));
+        $joinCond = join(' AND ', array(
+            'price_index.entity_id = e.entity_id',
+            'price_index.website_id = ' . $websiteId,
+            'price_index.customer_group_id = 0'
+        ));
+        $colls = array('final_price', 'min_price', 'max_price');
+        $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
     }
 
     /**
@@ -334,7 +352,6 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
      */
     public function getParents($parentRelations, $config)
     {
-
         if (!empty($config['conf_enabled']) && !empty($parentRelations)) {
             if (!empty($config['bypass_flat'])) {
                 $collection = Mage::getModel('sooqr/resource_product_collection');
@@ -342,9 +359,9 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                 $collection = Mage::getResourceModel('catalog/product_collection');
             }
 
+            /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
             $collection->setStore($config['store_id'])
                 ->addStoreFilter($config['store_id'])
-                ->addFinalPrice()
                 ->addUrlRewrite()
                 ->addAttributeToFilter('entity_id', array('in' => array_values($parentRelations)))
                 ->addAttributeToSelect(array_unique($config['parent_att']))
@@ -354,7 +371,29 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                 Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
             }
 
+            $this->joinPriceIndexLeft($collection, $config['website_id']);
+            $collection->getSelect()->group('e.entity_id');
+
+            if (!empty($config['filters'])) {
+                $collection = $this->addFilters($config['filters'], $collection, 'parent');
+            }
+
             return $collection->load();
         }
+    }
+
+    /**
+     * Direct Database Query to get total records of collection with filters.
+     *
+     * @param Mage_Catalog_Model_Resource_Product_Collection $productCollection
+     *
+     * @return int
+     */
+    public function getCollectionCountWithFilters($productCollection)
+    {
+        $selectCountSql = $productCollection->getSelectCountSql();
+        $connection = Mage::getSingleton('core/resource')->getConnection('core_read');
+        $count = $connection->fetchOne($selectCountSql);
+        return $count;
     }
 }

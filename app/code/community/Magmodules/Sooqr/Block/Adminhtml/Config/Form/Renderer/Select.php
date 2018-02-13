@@ -14,68 +14,77 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Renderer_Select extends Mage_Core_Block_Html_Select
 {
 
+    /**
+     * @param $inputName
+     *
+     * @return $this
+     */
     public function setInputName($inputName)
     {
         $this->setData('inputname', $inputName);
+
         return $this;
     }
 
-    public function getInputName()
-    {
-        return $this->getData('inputname');
-    }
-
+    /**
+     * @param $columnName
+     *
+     * @return $this
+     */
     public function setColumnName($columnName)
     {
         $this->setData('columnname', $columnName);
+
         return $this;
     }
 
-    public function getColumnName()
-    {
-        return $this->getData('columnname');
-    }
-
+    /**
+     * @param $column
+     *
+     * @return $this
+     */
     public function setColumn($column)
     {
         $this->setData('column', $column);
+
         return $this;
     }
 
-    public function getColumn()
+    /**
+     * @return mixed
+     */
+    public function getHtml()
     {
-        return $this->getData('column');
+        return $this->toHtml();
     }
 
-    public function getExtraParams()
-    {
-        $column = $this->getColumn();
-        if ($column && isset($column['style'])) {
-            return ' style="' . $column['style'] . '" ';
-        } else {
-            return '';
-        }
-    }
-
-    public function _toHtml()
+    /**
+     * @return string
+     */
+    protected function _toHtml()
     {
         if (!$this->_beforeToHtml()) {
             return '';
         }
 
-        $html = '<select name="' . $this->getInputName() . '" class="' . $this->getClass() . '" ' . $this->getExtraParams() . '>';
+        $html = sprintf(
+            '<select name="%s" class="%s" %s>',
+            $this->getInputName(),
+            $this->getClass(),
+            $this->getExtraParams()
+        );
 
         $values = $this->getValue();
 
         if (!is_array($values)) {
-            if (!is_null($values)) {
+            if (!empty($values)) {
                 $values = array($values);
             } else {
                 $values = array();
@@ -97,7 +106,7 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Renderer_Select extends Mage_
             }
 
             if (is_array($value)) {
-                $html .= '<optgroup label="' . $label . '">';
+                $html .= '<optgroup label="' . htmlspecialchars($label, ENT_QUOTES | ENT_HTML5) . '">';
                 foreach ($value as $keyGroup => $optionGroup) {
                     if (!is_array($optionGroup)) {
                         $optionGroup = array(
@@ -106,30 +115,62 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Renderer_Select extends Mage_
                         );
                     }
 
-                    $html .= $this->_optionToHtml(
-                        $optionGroup,
-                        in_array($optionGroup['value'], $values)
-                    );
+                    $html .= $this->_optionToHtml($optionGroup, in_array($optionGroup['value'], $values));
                 }
 
                 $html .= '</optgroup>';
             } else {
                 $html .= $this->_optionToHtml(
                     array(
-                    'value'  => $value,
-                    'label'  => $label,
-                    'params' => $params
-                    ),
-                    in_array($value, $values)
+                        'value'  => $value,
+                        'label'  => $label,
+                        'params' => $params
+                    ), in_array($value, $values)
                 );
             }
         }
 
         $html .= '</select>';
+
         return $html;
     }
 
-    public function _optionToHtml($option, $selected = false)
+    /**
+     * @return mixed
+     */
+    public function getInputName()
+    {
+        return $this->getData('inputname');
+    }
+
+    /**
+     * @return string
+     */
+    public function getExtraParams()
+    {
+        $column = $this->getColumn();
+        if ($column && isset($column['style'])) {
+            return ' style="' . $column['style'] . '" ';
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getColumn()
+    {
+        return $this->getData('column');
+    }
+
+    /**
+     * @param      $option
+     * @param bool $selected
+     *
+     * @return string
+     */
+    protected function _optionToHtml($option, $selected = false)
     {
         $selectedHtml = $selected ? ' selected="selected"' : '';
         if ($this->getIsRenderToJsTemplate() === true) {
@@ -151,21 +192,28 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Renderer_Select extends Mage_
 
         return sprintf(
             '<option value="%s"%s %s>%s</option>',
-            $this->htmlEscape($option['value']),
+            $this->escapeHtml($option['value']),
             $selectedHtml,
-            $params,
-            $this->htmlEscape($option['label'])
+            $params, $this->escapeHtml($option['label'])
         );
     }
 
-    public function getHtml()
-    {
-        return $this->toHtml();
-    }
-
+    /**
+     * @param $optionValue
+     *
+     * @return string
+     */
     public function calcOptionHash($optionValue)
     {
         return sprintf('%u', crc32($this->getColumnName() . $this->getInputName() . $optionValue));
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getColumnName()
+    {
+        return $this->getData('columnname');
     }
 
 }

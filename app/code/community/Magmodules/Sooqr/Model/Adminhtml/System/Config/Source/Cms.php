@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,19 +14,34 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Cms
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $cms = array();
-        $cms[] = array('value' => '0', 'label' => Mage::helper('sooqr')->__('No'));
-        $cms[] = array('value' => '1', 'label' => Mage::helper('sooqr')->__('Yes, all'));
-        $cms[] = array('value' => '2', 'label' => Mage::helper('sooqr')->__('Yes, selection'));
-        return $cms;
+        if (!$this->options) {
+            $this->options = array(
+                array('value' => '0', 'label' => Mage::helper('sooqr')->__('No')),
+                array('value' => '1', 'label' => Mage::helper('sooqr')->__('Yes, all')),
+                array('value' => '2', 'label' => Mage::helper('sooqr')->__('Yes, selection')),
+            );
+
+        }
+        return $this->options;
     }
 
 }

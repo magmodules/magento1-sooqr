@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -28,16 +28,39 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter
     protected $_renders = array();
 
     /**
-     * Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Shipping constructor.
+     * Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter constructor.
      */
     public function __construct()
     {
         $layout = Mage::app()->getFrontController()->getAction()->getLayout();
-        $rendererAttributes = $layout->createBlock('sooqr/adminhtml_config_form_renderer_select', '', array('is_render_to_js_template' => true));
-        $rendererAttributes->setOptions(Mage::getModel('sooqr/adminhtml_system_config_source_attribute')->toOptionArray());
+        $rendererAttributes = $layout->createBlock(
+            'sooqr/adminhtml_config_form_renderer_select',
+            '',
+            array('is_render_to_js_template' => true)
+        );
+        $rendererAttributes->setOptions(
+            Mage::getModel('sooqr/adminhtml_system_config_source_attribute')->toOptionArray()
+        );
 
-        $rendererConditions = $layout->createBlock('sooqr/adminhtml_config_form_renderer_select', '', array('is_render_to_js_template' => true));
-        $rendererConditions->setOptions(Mage::getModel('sooqr/adminhtml_system_config_source_conditions')->toOptionArray());
+        $rendererConditions = $layout->createBlock(
+            'sooqr/adminhtml_config_form_renderer_select',
+            '',
+            array('is_render_to_js_template' => true)
+        );
+
+        $rendererConditions->setOptions(
+            Mage::getModel('sooqr/adminhtml_system_config_source_conditions')->toOptionArray()
+        );
+
+        $rendererTypes = $layout->createBlock(
+            'sooqr/adminhtml_config_form_renderer_select',
+            '',
+            array('is_render_to_js_template' => true)
+        );
+
+        $rendererTypes->setOptions(
+            Mage::getModel('sooqr/adminhtml_system_config_source_producttypes')->toOptionArray()
+        );
 
         $this->addColumn(
             'attribute', array(
@@ -62,8 +85,17 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter
             )
         );
 
+        $this->addColumn(
+            'product_type', array(
+                'label'    => Mage::helper('sooqr')->__('Apply To'),
+                'style'    => 'width:150px',
+                'renderer' => $rendererTypes
+            )
+        );
+
         $this->_renders['attribute'] = $rendererAttributes;
         $this->_renders['condition'] = $rendererConditions;
+        $this->_renders['product_type'] = $rendererTypes;
 
         $this->_addAfter = false;
         $this->_addButtonLabel = Mage::helper('sooqr')->__('Add Filter');
@@ -73,7 +105,7 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter
     /**
      * @param Varien_Object $row
      */
-    public function _prepareArrayRow(Varien_Object $row)
+    protected function _prepareArrayRow(Varien_Object $row)
     {
         foreach ($this->_renders as $key => $render) {
             $row->setData(
@@ -82,5 +114,4 @@ class Magmodules_Sooqr_Block_Adminhtml_Config_Form_Field_Filter
             );
         }
     }
-
 }

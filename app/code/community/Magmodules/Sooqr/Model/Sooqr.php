@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -39,6 +39,8 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
      * @param string $type
      *
      * @return array
+     * @throws Exception
+     * @throws Mage_Core_Exception]
      */
     public function generateFeed($storeId, $type = 'xml')
     {
@@ -131,15 +133,17 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         $config = array();
         $store = Mage::getModel('core/store')->load($storeId);
         $website = Mage::getModel('core/website')->load($store->getWebsiteId());
+        $websiteId = $website->getId();
+        $attribute = Mage::getResourceModel('eav/entity_attribute');
 
         $config['store_id'] = $storeId;
+        $config['website_id'] = $websiteId;
         $config['website_name'] = $this->helper->cleanData($website->getName(), 'striptags');
         $config['website_url'] = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK);
         $config['media_url'] = $store->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
         $config['media_image_url'] = $config['media_url'] . 'catalog' . DS . 'product';
         $config['media_attributes'] = $this->helper->getMediaAttributes();
-        $config['media_gallery_id'] = Mage::getResourceModel('eav/entity_attribute')
-            ->getIdByCode('catalog_product', 'media_gallery');
+        $config['media_gallery_id'] = $attribute->getIdByCode('catalog_product', 'media_gallery');
         $config['image_source'] = Mage::getStoreConfig('sooqr_connect/products/image_source', $storeId);
         $config['image_resize'] = Mage::getStoreConfig('sooqr_connect/products/image_resize', $storeId);
         $config['file_name'] = $this->getFileName('sooqr', $storeId);
@@ -306,7 +310,7 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
         );
         $attributes['stock_status'] = array(
             'label'  => 'stock_status',
-            'source' => 'stock_status'
+            'source' => 'is_in_stock'
         );
         $attributes['type'] = array(
             'label'  => 'product_object_type',
@@ -416,8 +420,20 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
             $extraDataFields = array_merge($extraDataFields, $categoryData);
         }
 
-        if ($pricesData = $this->getPrices($productData['price'], $config['currency'], $config, $prices, $product)) {
-            $extraDataFields = array_merge($extraDataFields, $pricesData);
+        if (!empty($productData['assoc_id'])) {
+            $itemGroupId = $productData['assoc_id'];
+        } else {
+            $itemGroupId = '';
+        }
+        if ($priceData = $this->getPrices(
+            $productData['price'],
+            $prices,
+            $product,
+            $config['currency'],
+            $itemGroupId
+        )
+        ) {
+            $extraDataFields = array_merge($extraDataFields, $priceData);
         }
 
         if ($assocId = $this->getAssocId($productData)) {
@@ -469,26 +485,27 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
 
     /**
      * @param $data
-     * @param $currency
-     * @param $config
      * @param $confPrices
      * @param $product
+     * @param $currency
+     * @param $itemGroupId
      *
      * @return array
      */
-    public function getPrices($data, $currency, $config, $confPrices, $product)
+    public function getPrices($data, $confPrices, $product, $currency, $itemGroupId)
     {
         $prices = array();
         $id = $product->getEntityId();
+        $parentPriceIndex = $itemGroupId . '_' . $id;
         $prices['currency'] = $currency;
-        if (!empty($confPrices[$id])) {
-            $confPrice = Mage::helper('tax')->getPrice($product, $confPrices[$id], true);
-            $confPriceReg = Mage::helper('tax')->getPrice($product, $confPrices[$id . '_reg'], true);
+        if ($itemGroupId && !empty($confPrices[$parentPriceIndex])) {
+            $confPrice = Mage::helper('tax')->getPrice($product, $confPrices[$parentPriceIndex], true);
+            $confPriceReg = Mage::helper('tax')->getPrice($product, $confPrices[$parentPriceIndex . '_reg'], true);
             if ($confPriceReg > $confPrice) {
-                $prices['price'] = $confPrice;
-                $prices['normal_price'] = $confPriceReg;
+                $prices['special_price'] = number_format($confPrice, 2, '.', '');
+                $prices['price'] = number_format($confPriceReg, 2, '.', '');
             } else {
-                $prices['price'] = $confPrice;
+                $prices['price'] = number_format($confPrice, 2, '.', '');
             }
         } else {
             if (!empty($config['currency_data'])) {

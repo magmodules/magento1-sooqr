@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -24,5 +24,5 @@ for ($i = 0; $i < 16; $i++) {
     $token .= $chars[array_rand($chars)];
 }
 
- $config = Mage::getModel('core/config');
+$config = Mage::getModel('core/config');
 $config->saveConfig('sooqr_connect/generate/token', $token, 'default', 0);

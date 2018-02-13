@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
@@ -23,6 +23,7 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Feeds
 {
 
     /**
+     * /**
      * @param Varien_Data_Form_Element_Abstract $element
      *
      * @return string
@@ -33,6 +34,7 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Feeds
         $storeIds = $helper->getStoreIds('sooqr_connect/generate/enabled');
         $htmlFeedlinks = '';
         foreach ($storeIds as $storeId) {
+            $store = Mage::getModel('core/store')->load($storeId);
             $generateUrl = $this->getUrl('*/sooqr/generateManual/store_id/' . $storeId);
             $previewUrl = $this->getUrl('*/sooqr/preview/store_id/' . $storeId);
             $downloadUrl = $this->getUrl('*/sooqr/download/store_id/' . $storeId);
@@ -42,8 +44,8 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Feeds
                 $downloadUrl = '';
             }
 
-            $storeTitle = Mage::app()->getStore($storeId)->getName();
-            $storeCode = Mage::app()->getStore($storeId)->getCode();
+            $storeTitle = $store->getName();
+            $storeCode = $store->getCode();
             $htmlFeedlinks .= '<tr>
              <td valign="top">' . $storeTitle . '<br/><small>Code: ' . $storeCode . '</small></td>
              <td>' . $feedText . '</td>

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magmodules.eu - http://www.magmodules.eu
  *
@@ -15,19 +14,33 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2017 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Tax
 {
 
+    /**
+     * Options array
+     *
+     * @var array
+     */
+    public $options = null;
+
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
-        $position = array();
-        $position[] = array('value' => '', 'label' => Mage::helper('sooqr')->__('No'));
-        $position[] = array('value' => 'incl', 'label' => Mage::helper('sooqr')->__('Force including Tax'));
-        $position[] = array('value' => 'excl', 'label' => Mage::helper('sooqr')->__('Force excluding Tax'));
-        return $position;
-    }
+        if (!$this->options) {
+            $this->options = array(
+                array('value' => '', 'label' => Mage::helper('sooqr')->__('No')),
+                array('value' => 'incl', 'label' => Mage::helper('sooqr')->__('Force including Tax')),
+                array('value' => 'excl', 'label' => Mage::helper('sooqr')->__('Force excluding Tax')),
+            );
+        }
 
+        return $this->options;
+    }
 }
