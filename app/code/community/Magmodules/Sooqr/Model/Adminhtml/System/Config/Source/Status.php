@@ -34,7 +34,6 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Status
     public function toOptionArray()
     {
         if (!$this->options) {
-
             $this->options = array(
                 array('value' => '1', 'label' => Mage::helper('adminhtml')->__('Enabled')),
                 array('value' => '2', 'label' => Mage::helper('adminhtml')->__('Disabled')),

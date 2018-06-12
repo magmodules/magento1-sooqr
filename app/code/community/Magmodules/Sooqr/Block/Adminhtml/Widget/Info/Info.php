@@ -36,8 +36,8 @@ class Magmodules_Sooqr_Block_Adminhtml_Widget_Info_Info
            <tr>
             <td width="58%">More Extensions from Magmodules:</td>
             <td width="42%">
-             <a href="http://www.magmodules.eu" target="_blank">
-              Magento Connect
+             <a href="https://marketplace.magento.com/partner/Magmodules" target="_blank">
+              Magento Marketplace
              </a>
              </td>
             </tr>

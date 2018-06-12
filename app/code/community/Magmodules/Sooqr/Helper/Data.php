@@ -26,12 +26,35 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
     /**
      * @param $path
+     * @param $storeId
+     *
+     * @return mixed
+     */
+    public function getSerializedConfigData($path, $storeId = null)
+    {
+        return @unserialize($this->getConfigData($path, $storeId));
+    }
+
+    /**
+     * @param $path
+     * @param $storeId
+     *
+     * @return mixed
+     */
+    public function getConfigData($path, $storeId = null)
+    {
+        return Mage::getStoreConfig('sooqr_connect/' . $path, $storeId);
+    }
+
+    /**
+     * @param $path
      *
      * @return array
      */
     public function getStoreIds($path)
     {
         $storeIds = array();
+        /** @var Mage_Core_Model_Resource_Store_Collection $stores */
         $stores = Mage::getModel('core/store')->getCollection();
         foreach ($stores as $store) {
             if (Mage::getStoreConfig($path, $store->getId())) {
@@ -50,6 +73,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function getUncachedConfigValue($path, $storeId = 0)
     {
+        /** @var Mage_Core_Model_Resource_Config_Data_Collection $collection */
         $collection = Mage::getModel('core/config_data')->getCollection()->addFieldToFilter('path', $path);
         if ($storeId == 0) {
             $collection = $collection->addFieldToFilter('scope_id', 0)->addFieldToFilter('scope', 'default');
@@ -70,7 +94,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function getProductDataRow($product, $config, $parent, $parentAttributes)
     {
-
         $fields = $config['field'];
         $data = array();
 
@@ -139,16 +162,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             }
 
             if (!empty($config['hide_no_stock'])) {
-                if ($product->getUseConfigManageStock()) {
-                    $manageStock = $config['stock_manage'];
-                } else {
-                    $manageStock = $product->getManageStock();
-                }
-
-                if ($manageStock) {
-                    if (!$product['is_in_stock']) {
-                        return false;
-                    }
+                if (!$product->getIsSalable()) {
+                    return false;
                 }
             }
 
@@ -174,6 +189,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function getAttributeValue($field, $product, $config, $actions = '', $parent, $parentAttributes)
     {
+        $dataRow = array();
         $data = $config['field'][$field];
         $productData = $product;
 
@@ -201,6 +217,9 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             case 'availability':
                 $value = $this->getProductAvailability($productData, $config);
                 break;
+            case 'weight':
+                $value = $this->getProductWeight($productData, $config);
+                break;
             case 'price':
                 $value = $this->getProductPrice($productData, $config);
                 break;
@@ -210,14 +229,25 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             case 'is_in_stock':
                 $value = $this->getIsInStock($productData, $config);
                 break;
+            case 'is_saleable':
+                $value = $productData->getIsSalable();
+                break;
             case 'parent_id':
                 $value = $this->getProductData($parent, $data);
                 break;
-            case 'attribute_set_id':
+            case 'attribute_set_name':
                 $value = $this->getAttributeSetName($productData);
                 break;
             case 'categories':
                 $value = $this->getProductCategories($productData, $config);
+                break;
+            case 'backorders':
+            case 'stock':
+            case 'manage_stock':
+            case 'min_sale_qty':
+            case 'qty_increments':
+            case 'allow_backorder':
+                $value = $this->getStockValue($field, $product, $config);
                 break;
             default:
                 if (!empty($data['source'])) {
@@ -246,7 +276,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
         if ((is_array($value) && ($field == 'image_link'))) {
             $i = 1;
-            $dataRow = array();
             foreach ($value as $key => $val) {
                 $dataRow[$key] = $val;
                 $i++;
@@ -298,16 +327,16 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             }
         }
 
-        if (!empty($parent) && !empty($url)) {
-            if (!empty($parentAttributes[$parent->getEntityId()])) {
-                $storeId = $config['store_id'];
-                $pId = $product->getId();
+        if (!empty($parent) && !empty($config['conf_switch_urls'])) {
+            if ($parent->getTypeId() == 'configurable') {
                 $productAttributeOptions = $parentAttributes[$parent->getEntityId()];
                 $urlExtra = '';
                 foreach ($productAttributeOptions as $productAttribute) {
-                    $attCode = $productAttribute['attribute_code'];
-                    $id = Mage::getResourceModel('catalog/product')->getAttributeRawValue($pId, $attCode, $storeId);
-                    if ($id > 0) {
+                    if ($id = Mage::getResourceModel('catalog/product')->getAttributeRawValue(
+                        $product->getId(),
+                        $productAttribute['attribute_code'], $config['store_id']
+                    )
+                    ) {
                         $urlExtra .= $productAttribute['attribute_id'] . '=' . $id . '&';
                     }
                 }
@@ -383,32 +412,31 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
             if (!empty($config['images'])) {
                 $imageData['image_link'] = $image;
-                $container = new Varien_Object(
-                    array(
-                        'attribute' => new Varien_Object(array('id' => $config['media_gallery_id']))
-                    )
-                );
+                $container = new Varien_Object(array('attribute' => new Varien_Object(array('id' => $config['media_gallery_id']))));
                 $imgProduct = new Varien_Object(array('id' => $product->getId(), 'store_id' => $config['store_id']));
-                $gallery = Mage::getResourceModel('catalog/product_attribute_backend_media')->loadGallery(
-                    $imgProduct,
-                    $container
-                );
-
+                $gallery = Mage::getResourceModel('catalog/product_attribute_backend_media')
+                    ->loadGallery($imgProduct, $container);
                 $i = 1;
                 usort(
                     $gallery, function ($a, $b) {
                     return $a['position_default'] > $b['position_default'];
-                }
+                    }
                 );
-                foreach ($gallery as $galleryImage) {
-                    if ($galleryImage['disabled'] == 0) {
-                        $imageData['image']['all']['image_' . $i] =  $this->checkImagePath($galleryImage['file'],
-                            $config['media_image_url']);
-                        $imageData['image']['last'] =$this->checkImagePath($galleryImage['file'],
-                            $config['media_image_url']);
+                foreach ($gallery as $galImage) {
+                    if ($galImage['disabled'] == 0) {
+                        $imageData['image']['all']['image_' . $i] = $this->checkImagePath(
+                            $galImage['file'],
+                            $config['media_image_url']
+                        );
+                        $imageData['image']['last'] = $this->checkImagePath(
+                            $galImage['file'],
+                            $config['media_image_url']
+                        );
                         if ($i == 1) {
-                            $imageData['image']['first'] = $this->checkImagePath($galleryImage['file'],
-                                $config['media_image_url']);
+                            $imageData['image']['first'] = $this->checkImagePath(
+                                $galImage['file'],
+                                $config['media_image_url']
+                            );
                         }
 
                         $i++;
@@ -417,7 +445,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
                 return $imageData;
             } else {
-                 if (!empty($imageData['image'][$config['image_source']])) {
+                if (!empty($imageData['image'][$config['image_source']])) {
                     return $imageData['image'][$config['image_source']];
                 } else {
                     return $image;
@@ -478,7 +506,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     {
         if (!empty($config['stock_instock'])) {
             if ($product->getUseConfigManageStock()) {
-                $manageStock = $config['stock_manage'];
+                $manageStock = $config['inventory']['config_manage_stock'];
             } else {
                 $manageStock = $product->getManageStock();
             }
@@ -503,134 +531,174 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      * @param Mage_Catalog_Model_Product $product
      * @param                            $config
      *
+     * @return string
+     */
+    public function getProductWeight($product, $config)
+    {
+        if (!empty($config['weight'])) {
+            $weight = (float)$product->getWeight();
+            $weight = number_format($weight, 2, '.', '');
+            if (isset($config['weight_units'])) {
+                $weight = $weight . ' ' . $config['weight_units'];
+            }
+
+            if (!empty($weight)) {
+                return $weight;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param Mage_Catalog_Model_Product $product
+     * @param                            $config
+     *
      * @return array
      */
     public function getProductPrice($product, $config)
     {
         $priceData = array();
-        $priceMarkup = $this->getPriceMarkup($config);
-        $taxParam = $config['use_tax'];
 
-        if (!empty($config['hide_currency'])) {
-            $currency = '';
-        } else {
-            $currency = ' ' . $config['currency'];
+        switch ($product->getTypeId()) {
+            case 'grouped':
+                $groupedPrices = $this->getGroupedPrices($product, $config);
+
+                $price = $groupedPrices['min_price'];
+                $finalPrice = $groupedPrices['min_price'];
+                $minPrice = $groupedPrices['min_price'];
+                $maxPrice = $groupedPrices['max_price'];
+                $totalPrice = $groupedPrices['total_price'];
+
+                $groupedPriceType = !empty($config['price_grouped']) ? $config['price_grouped'] : 'min';
+                if ($groupedPriceType == 'max') {
+                    $price = $maxPrice;
+                    $finalPrice = $maxPrice;
+                }
+
+                if ($groupedPriceType == 'total') {
+                    $price = $totalPrice;
+                    $finalPrice = $totalPrice;
+                }
+                break;
+            case 'bundle':
+                if ($product->getPriceType() == '1') {
+                    $price = $this->processPrice($product, $product->getPrice(), $config);
+                    $finalPrice = $this->processPrice($product, $product->getFinalPrice(), $config);;
+                    $minPrice = $this->processPrice($product, $product->getData('min_price'), $config);
+                    $maxPrice = $this->processPrice($product, $product->getData('max_price'), $config);
+
+                    if ((floatval($price) == 0) && (floatval($minPrice) !== 0)) {
+                        $price = $minPrice;
+                    }
+                } else {
+                    $bundlePrices = $this->getBundlePrices($product, $config);
+                    $price = $this->processPrice($product, $bundlePrices['min_price'], $config);
+                    $minPrice = $this->processPrice($product, $bundlePrices['min_price'], $config);
+                    $maxPrice = $this->processPrice($product, $bundlePrices['max_price'], $config);
+
+                    if (isset($bundlePrices['configured_price'])) {
+                        $configuredPrice = $this->processPrice($product, $bundlePrices['configured_price'], $config);
+                    }
+                }
+
+                if ($product->getSpecialPrice() > 0) {
+                    $today = time();
+                    $specialPriceFromDate = $product->getSpecialFromDate();
+                    $specialPriceToDate = $product->getSpecialToDate();
+                    if ($today >= strtotime($specialPriceFromDate)) {
+                        if ($today <= strtotime($specialPriceToDate) || empty($specialPriceToDate)) {
+                            $finalPrice = $price * ($product->getSpecialPrice() / 100);
+                            $minPrice = $minPrice * ($product->getSpecialPrice() / 100);
+                            $maxPrice = $maxPrice * ($product->getSpecialPrice() / 100);
+                        }
+                    }
+                }
+                break;
+            default:
+                $price = $this->processPrice($product, $product->getPrice(), $config);
+                $finalPrice = $this->processPrice($product, $product->getFinalPrice(), $config);;
+                $minPrice = $this->processPrice($product, $product->getData('min_price'), $config);
+                $maxPrice = $this->processPrice($product, $product->getData('max_price'), $config);
+
+                if ((floatval($price) == 0) && (floatval($minPrice) !== 0)) {
+                    $price = $minPrice;
+                }
+                break;
         }
 
-        if (!empty($config['price_scope'])) {
-            $price = Mage::getResourceModel('catalog/product')
-                ->getAttributeRawValue($product->getId(), 'price', $config['store_id']);
-        } else {
-            $price = $product->getPrice();
+        $priceData['final_price_clean'] = $price;
+        $priceData['price'] = $this->formatPrice($price, $config);
+        $priceData['regular_price'] = $this->formatPrice($price, $config);
+
+        if (isset($minPrice)) {
+            $priceData['min_price'] = $this->formatPrice($minPrice, $config);
         }
 
-        if ($price == 0) {
-            $price = $product->getMinPrice();
+        if (isset($maxPrice)) {
+            $priceData['max_price'] = $this->formatPrice($maxPrice, $config);
         }
 
-        $price = Mage::helper('tax')->getPrice($product, $price, $taxParam);
-        $priceData['regular_price'] = number_format(($price * $priceMarkup), 2, '.', '') . $currency;
-        $pricerulePrice = Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), $taxParam);
+        if (isset($configuredPrice)) {
+            $priceData['configured_price'] = $this->formatPrice($configuredPrice, $config);
+        }
 
-        if (($pricerulePrice > 0) && ($pricerulePrice < $price)) {
-            $salesPrice = $pricerulePrice;
+        if (isset($finalPrice) && ($finalPrice > 0) && ($finalPrice < $price)) {
+            $today = time();
             $specialPriceFromDate = $product->getSpecialFromDate();
             $specialPriceToDate = $product->getSpecialToDate();
-            $today = time();
             if ($today >= strtotime($specialPriceFromDate)) {
                 if ($today <= strtotime($specialPriceToDate) || empty($specialPriceToDate)) {
                     $priceData['sales_date_start'] = $specialPriceFromDate;
                     $priceData['sales_date_end'] = $specialPriceToDate;
                 }
             }
-        }
 
-        if (($product->getTypeId() == 'bundle') && ($price < 0.01)) {
-            $price = $this->getPriceBundle($product, $config['store_id']);
-        }
-
-        if ($product->getTypeId() == 'grouped') {
-            if (!empty($config['price_grouped'])) {
-                $price = $this->getPriceGrouped($product, $config['price_grouped']);
-            } else {
-                if ($price < 0.01) {
-                    $price = $this->getPriceGrouped($product);
-                }
-            }
-        }
-
-        $priceData['final_price_clean'] = $price;
-        $priceData['price'] = number_format(($price * $priceMarkup), 2, '.', '') . $currency;
-
-        if ($product->getMinPrice() !== null) {
-            $minPrice = Mage::helper('tax')->getPrice($product, $product->getMinPrice(), $taxParam);
-            $priceData['min_price'] = number_format(($minPrice * $priceMarkup), 2, '.', '') . $currency;
-        }
-
-        if ($product->getMaxPrice() !== null) {
-            $maxPrice = Mage::helper('tax')->getPrice($product, $product->getMaxPrice(), $taxParam);
-            $priceData['max_price'] = number_format(($maxPrice * $priceMarkup), 2, '.', '') . $currency;
-        }
-
-        if (isset($salesPrice)) {
-            $priceData['sales_price'] = number_format(($salesPrice * $priceMarkup), 2, '.', '') . $currency;
+            $priceData['sales_price'] = $this->formatPrice($finalPrice, $config);
         }
 
         return $priceData;
     }
 
     /**
-     * @param $config
+     * @param        Mage_Catalog_Model_Product $product
+     * @param string                            $config
      *
-     * @return int
+     * @return bool|mixed|number
      */
-    public function getPriceMarkup($config)
+    public function getGroupedPrices($product, $config)
     {
-        $markup = 1;
-        if (!empty($config['price_add_tax']) && !empty($config['price_add_tax_perc'])) {
-            $markup = 1 + ($config['price_add_tax_perc'] / 100);
-        }
-
-        if ($config['base_currency_code'] != $config['currency']) {
-            $exchangeRate = Mage::helper('directory')
-                ->currencyConvert(1, $config['base_currency_code'], $config['currency']);
-            $markup = ($markup * $exchangeRate);
-        }
-
-        return $markup;
-    }
-
-    /**
-     * @param Mage_Catalog_Model_Product $product
-     * @param                            $storeId
-     *
-     * @return int
-     */
-    public function getPriceBundle($product, $storeId)
-    {
-        if (($product->getPriceType() == '1') && ($product->getFinalPrice() > 0)) {
-            $price = $product->getFinalPrice();
-        } else {
-            $block = Mage::getSingleton('core/layout')->createBlock('bundle/catalog_product_view_type_bundle');
-            $options = $block->setProduct($product)->getOptions();
-            $price = 0;
-
-            foreach ($options as $option) {
-                $selection = $option->getDefaultSelection();
-                if ($selection === null) {
-                    continue;
-                }
-
-                $selectionProductId = $selection->getProductId();
-                $_resource = Mage::getSingleton('catalog/product')->getResource();
-                $finalPrice = $_resource->getAttributeRawValue($selectionProductId, 'final_price', $storeId);
-                $selectionQty = $_resource->getAttributeRawValue($selectionProductId, 'selection_qty', $storeId);
-                $price += ($finalPrice * $selectionQty);
+        $prices = array();
+        $_associatedProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
+        foreach ($_associatedProducts as $_item) {
+            $priceAssociated = $this->processPrice($_item, $_item->getFinalPrice(), $config);
+            if ($priceAssociated > 0) {
+                $prices[] = $priceAssociated;
             }
         }
 
-        if ($price < 0.01) {
-            $price = Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), true);
+        return array(
+            'min_price'   => min($prices),
+            'max_price'   => max($prices),
+            'total_price' => array_sum($prices)
+        );
+    }
+
+    /**
+     * @param Mage_Catalog_Model_Product     $product
+     * @param                                $price
+     * @param                                $config
+     *
+     * @return float|string
+     */
+    public function processPrice($product, $price, $config)
+    {
+        if (!empty($config['markup'])) {
+            $price = $price * $config['markup'];
+        }
+
+        if (isset($config['use_tax'])) {
+            $price = Mage::helper('tax')->getPrice($product, $price, $config['use_tax']);
         }
 
         return $price;
@@ -638,40 +706,84 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
     /**
      * @param        Mage_Catalog_Model_Product $product
-     * @param string                            $pricemodel
+     * @param array                             $config
      *
      * @return bool|mixed|number
      */
-    public function getPriceGrouped($product, $pricemodel = '')
+    public function getBundlePrices($product, $config)
     {
-        if (!$pricemodel) {
-            $pricemodel = 'min';
-        }
+        $minimalPrice = null;
+        $maximalPrice = null;
+        $configuredPrice = null;
 
-        $prices = array();
-        $_associatedProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
-        foreach ($_associatedProducts as $_item) {
-            $priceAssociated = Mage::helper('tax')->getPrice($_item, $_item->getFinalPrice(), true);
-            if ($priceAssociated > 0) {
-                $prices[] = $priceAssociated;
+        /** @var Mage_Bundle_Model_Product_Type $typeInstance */
+        $typeInstance = $product->getTypeInstance(true);
+        $typeInstance->setStoreFilter($config['store_id'], $product);
+
+        $optionCollection = $typeInstance->getOptionsCollection($product);
+        $selectionCollection = $typeInstance->getSelectionsCollection($typeInstance->getOptionsIds($product), $product);
+
+        $options = $optionCollection->appendSelections(
+            $selectionCollection, false,
+            Mage::helper('catalog/product')->getSkipSaleableCheck()
+        );
+
+        foreach ($options as $option) {
+            $prices = array();
+            $confFlag = false;
+            $selections = $option->getSelections();
+            foreach ($selections as $key => $selection) {
+                if ($selection->getSelectionQty() > 0) {
+                    $selectionPrice = $selection->getFinalPrice() * $selection->getSelectionQty();
+                } else {
+                    $selectionPrice = $selection->getFinalPrice();
+                }
+
+                $prices[] = $this->processPrice($selection, $selectionPrice, $config);
+
+                if ($selection->getIsDefault()) {
+                    $configuredPrice += $this->processPrice($selection, $selectionPrice, $config);
+                    $confFlag = true;
+                }
+            }
+
+            if ($option->getRequired()) {
+                $minimalPrice += min($prices);
+                if (!$confFlag) {
+                    $configuredPrice += min($prices);
+                }
+            }
+
+            if ($option->getType() == 'checkbox' || $option->getType() == 'multi') {
+                foreach ($prices as $price) {
+                    $maximalPrice += $price;
+                }
+            } else {
+                $maximalPrice += max($prices);
             }
         }
 
-        if (!empty($prices)) {
-            if ($pricemodel == 'min') {
-                return min($prices);
-            }
+        return array(
+            'min_price'        => $minimalPrice,
+            'max_price'        => $maximalPrice,
+            'configured_price' => $configuredPrice
+        );
+    }
 
-            if ($pricemodel == 'max') {
-                return max($prices);
-            }
-
-            if ($pricemodel == 'total') {
-                return array_sum($prices);
-            }
+    /**
+     * @param $price
+     * @param $config
+     *
+     * @return string
+     */
+    public function formatPrice($price, $config)
+    {
+        $price = number_format(floatval(str_replace(',', '.', $price)), 2, '.', '');
+        if (!empty($config['use_currency']) && ($price >= 0)) {
+            $price .= ' ' . $config['currency'];
         }
 
-        return false;
+        return $price;
     }
 
     /**
@@ -684,6 +796,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         if ($product->getTypeId() == 'bundle') {
             return 'true';
         }
+
         return false;
     }
 
@@ -740,6 +853,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 } else {
                     $attributetext = $product->getAttributeText($source);
                 }
+
                 if (!empty($attributetext)) {
                     $value = $attributetext;
                 }
@@ -772,7 +886,15 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function getAttributeSetName($product)
     {
-        return Mage::getModel('eav/entity_attribute_set')->load($product->getAttributeSetId())->getAttributeSetName();
+        $attributeSetId = $product->getAttributeSetId();
+        /** @var Mage_Eav_Model_Entity_Attribute_Set $attributeSet */
+        $attributeSet = Mage::getModel('eav/entity_attribute_set')->load($attributeSetId);
+
+        if ($attributeSet->getId()) {
+            return $attributeSet->getAttributeSetName();
+        }
+
+        return null;
     }
 
     /**
@@ -814,12 +936,79 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      *
      * @return array
      */
-    function getSortedArray($data, $sort)
+    public function getSortedArray($data, $sort)
     {
         $code = "return strnatcmp(\$a['$sort'], \$b['$sort']);";
         usort($data, create_function('$a,$b', $code));
 
         return array_reverse($data);
+    }
+
+    /**
+     * @param                            $field
+     * @param Mage_Catalog_Model_Product $product
+     * @param                            $config
+     *
+     * @return bool|string
+     */
+    public function getStockValue($field, $product, $config)
+    {
+        $inventory = $config['inventory'];
+        if ($field == 'manage_stock') {
+            if ($product->getData('use_config_manage_stock')) {
+                return $inventory['config_manage_stock'];
+            } else {
+                return $product->getData('manage_stock');
+            }
+        }
+
+        if ($field == 'min_sale_qty') {
+            if ($product->getData('use_config_min_sale_qty')) {
+                return $inventory['config_min_sale_qty'];
+            } else {
+                return $product->getData('min_sale_qty');
+            }
+        }
+
+        if ($field == 'allow_backorder') {
+            if (!empty($config['stock_exclude'])) {
+                return 0;
+            }
+
+            if (!$product->getData('is_in_stock')) {
+                return 0;
+            }
+
+            if ($product->getData('use_config_backorders')) {
+                return $inventory['config_backorders'];
+            } else {
+                if ($product->getData('backorders') > 0) {
+                    return 1;
+                }
+
+                return 0;
+            }
+        }
+
+        if ($field == 'qty_increments') {
+            if ($product->getData('use_config_enable_qty_inc')) {
+                if (!$inventory['config_enable_qty_inc']) {
+                    return false;
+                }
+            } else {
+                if (!$product->getData('enable_qty_inc')) {
+                    return false;
+                }
+            }
+
+            if ($product->getData('use_config_qty_increments')) {
+                return $inventory['config_qty_increments'];
+            } else {
+                return $product->getData('qty_increments');
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -891,6 +1080,33 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
         return $st;
     }
 
+    /**
+     * @param $config
+     *
+     * @return int
+     */
+    public function getPriceMarkup($config)
+    {
+        $markup = 1;
+        if (!empty($config['price_add_tax']) && !empty($config['price_add_tax_perc'])) {
+            $markup = 1 + ($config['price_add_tax_perc'] / 100);
+        }
+
+        if ($config['base_currency_code'] != $config['currency']) {
+            $exchangeRate = Mage::helper('directory')
+                ->currencyConvert(1, $config['base_currency_code'], $config['currency']);
+            $markup = ($markup * $exchangeRate);
+        }
+
+        return $markup;
+    }
+
+    /**
+     * @param $config
+     * @param $product
+     *
+     * @return int
+     */
     public function backorderCheck($config, $product)
     {
         if ($product->getUseConfigManageStock()) {
@@ -930,7 +1146,6 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
 
         if (empty($config['conf_switch_urls'])) {
             return $configurableAttributes;
-
         }
 
         foreach ($parents as $parent) {
@@ -974,10 +1189,19 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             $action = (!empty($attribute['action']) ? $attribute['action'] : '');
             $parent = (!empty($attribute['parent']) ? $attribute['parent'] : '');
             if (isset($attribute['source'])) {
+                /** @var Mage_Eav_Model_Entity_Attribute $attributeModel */
                 $attributeModel = Mage::getModel('eav/entity_attribute')
                     ->loadByCode('catalog_product', $attribute['source']);
 
                 $type = $attributeModel->getFrontendInput();
+            }
+
+            if (!empty($attribute['label']) && ($attribute['label'] == 'manage_stock')) {
+                $type = 'boolean';
+            }
+
+            if (!empty($attribute['label']) && ($attribute['label'] == 'qty')) {
+                $type = 'float';
             }
 
             if (!empty($config['conf_fields'])) {
@@ -1033,7 +1257,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 ->setPageSize(1)
                 ->getFirstItem();
         } catch (Exception $e) {
-            Mage::log($e->getMessage());
+            $this->addToLog('getCategoryData', $e->getMessage());
         }
 
         if (empty($e)) {
@@ -1042,6 +1266,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 ->setStoreId($storeId)
                 ->getCollection()
                 ->addAttributeToSelect($attributes)
+                ->addFieldToFilter('path', array('like' => '%/' . $config['root_category_id'] . '/%'))
                 ->addFieldToFilter('is_active', array('eq' => 1));
         } else {
             /** @var Mage_Catalog_Model_Resource_Category_Collection $categories */
@@ -1049,6 +1274,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 ->setStoreId($storeId)
                 ->getCollection()
                 ->addAttributeToSelect($defaultAttributes)
+                ->addFieldToFilter('path', array('like' => '%/' . $config['root_category_id'] . '/%'))
                 ->addFieldToFilter('is_active', array('eq' => 1));
         }
 
@@ -1131,8 +1357,24 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param $products
-     * @param $config
+     * @param      $type
+     * @param      $msg
+     * @param int  $level
+     * @param bool $force
+     */
+    public function addToLog($type, $msg, $level = null, $force = false)
+    {
+        if (is_array($msg)) {
+            $msg = json_encode($msg);
+        }
+
+        $msg = $type . ': ' . $msg;
+        Mage::log($msg, $level, self::LOG_FILENAME, $force);
+    }
+
+    /**
+     * @param Mage_Catalog_Model_Resource_Product_Collection $products
+     * @param                                                $config
      *
      * @return array
      */
@@ -1177,8 +1419,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
     }
 
     /**
-     * @param $config
-     * @param $products
+     * @param                                                $config
+     * @param Mage_Catalog_Model_Resource_Product_Collection $products
      *
      * @return array
      */
@@ -1196,6 +1438,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             foreach ($products as $product) {
                 if ($product->getTypeId() == 'configurable') {
                     $parentId = $product->getEntityId();
+                    /** @var Mage_Catalog_Model_Product_Type_Configurable_Attribute $attributes */
                     $attributes = $product->getTypeInstance(true)->getConfigurableAttributes($product);
                     $basePrice = $product->getFinalPrice();
                     $basePriceReg = $product->getPrice();
@@ -1226,18 +1469,23 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                         $totalPrice = $basePrice;
                         $totalPriceReg = $basePriceReg;
                         foreach ($attributes as $attribute) {
-                            $value = $sProduct->getData($attribute->getProductAttribute()->getAttributeCode());
-                            if (isset($optionPrices[$value])) {
-                                $totalPrice += $optionPrices[$value];
-                                $totalPriceReg += $optionPrices[$value . '_reg'];
+                            if ($attribute->getProductAttribute() !== null) {
+                                $value = $sProduct->getData($attribute->getProductAttribute()->getAttributeCode());
+                                if (isset($optionPrices[$value])) {
+                                    $totalPrice += $optionPrices[$value];
+                                    $totalPriceReg += $optionPrices[$value . '_reg'];
+                                }
                             }
                         }
 
-                        $typePrices[$parentId . '_' . $sProduct->getEntityId()] =
-                            number_format(($totalPrice * $config['markup']), 2, '.', '');
-
-                        $typePrices[$parentId . '_' . $sProduct->getEntityId() . '_reg'] =
-                            number_format(($totalPriceReg * $config['markup']), 2, '.', '');
+                        $typePrices[$parentId . '_' . $sProduct->getEntityId()] = $this->formatPrice(
+                            ($totalPrice * $config['markup']),
+                            $config
+                        );
+                        $typePrices[$parentId . '_' . $sProduct->getEntityId() . '_reg'] = $this->formatPrice(
+                            ($totalPriceReg * $config['markup']),
+                            $config
+                        );
                     }
                 }
             }
@@ -1289,6 +1537,8 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             $dir = Mage::getBaseDir('app') . DS . 'code' . DS . 'local' . DS . 'Magmodules' . DS . $dir;
             return file_exists($dir);
         }
+
+        return false;
     }
 
     /**
@@ -1370,6 +1620,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
      */
     public function addLog($page, $pages, $processed)
     {
+
         $memoryUsage = memory_get_usage(true);
         if ($memoryUsage < 1024) {
             $usage = $memoryUsage . ' b';
@@ -1387,7 +1638,7 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             $processed
         );
 
-        Mage::log($msg, null, self::LOG_FILENAME, self::FORCE_LOG);
+        $this->addToLog('Generation', $msg, null, true);
     }
 
     /**

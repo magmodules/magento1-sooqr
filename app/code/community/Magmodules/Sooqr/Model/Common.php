@@ -24,7 +24,7 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
     /**
      * @param $config
      *
-     * @return Mage_Catalog_Model_Resource_Product_Collection
+     * @return Magmodules_Sooqr_Model_Resource_Product_Collection
      * @throws Mage_Core_Exception
      */
     public function getProducts($config)
@@ -33,14 +33,9 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
         $limit = $config['limit'];
         $websiteId = $config['website_id'];
 
-        if (!empty($config['bypass_flat'])) {
-            $collection = Mage::getModel('sooqr/resource_product_collection');
-        } else {
-            $collection = Mage::getResourceModel('catalog/product_collection');
-        }
-
-        /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
-        $collection->setStore($storeId)
+        /** @var Magmodules_Sooqr_Model_Resource_Product_Collection $collection */
+        $collection = Mage::getModel('sooqr/resource_product_collection')
+            ->setStore($storeId)
             ->addStoreFilter($storeId)
             ->addUrlRewrite()
             ->addAttributeToFilter('status', 1);
@@ -49,6 +44,69 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             $collection->setPageSize($limit);
         }
 
+        $this->addStatusFilters($collection, $config);
+        $this->addCategoryFilters($collection, $config);
+
+        if (!empty($config['filters'])) {
+            $this->addFilters($config['filters'], $collection);
+        }
+
+        if (!empty($config['hide_no_stock'])) {
+            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
+        }
+
+        $attributes = $this->getAttributes($config['field']);
+        $collection->addAttributeToSelect($attributes);
+
+        $collection->joinTable(
+            'cataloginventory/stock_item',
+            'product_id=entity_id',
+            $config['inventory']['attributes']
+        );
+
+        $this->joinPriceIndexLeft($collection, $websiteId);
+        $collection->getSelect()->group('e.entity_id');
+
+        if (!empty($config['filters'])) {
+            $this->addFilters($config['filters'], $collection);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * @param Magmodules_Sooqr_Model_Resource_Product_Collection          $collection
+     * @param                                                             $config
+     */
+    public function addStatusFilters($collection, $config)
+    {
+        if (!empty($config['filter_status'])) {
+            $visibility = $config['filter_status'];
+            if (strlen($visibility) > 1) {
+                $visibility = explode(',', $visibility);
+                if ($config['conf_enabled']) {
+                    $visibility[] = '1';
+                }
+
+                $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
+            } else {
+                if (!empty($config['conf_enabled'])) {
+                    $visibility = '1,' . $visibility;
+                    $visibility = explode(',', $visibility);
+                    $collection->addAttributeToFilter('visibility', array('in' => array($visibility)));
+                } else {
+                    $collection->addAttributeToFilter('visibility', array('eq' => array($visibility)));
+                }
+            }
+        }
+    }
+
+    /**
+     * @param Magmodules_Sooqr_Model_Resource_Product_Collection          $collection
+     * @param                                                             $config
+     */
+    public function addCategoryFilters($collection, $config)
+    {
         if (!empty($config['filter_enabled'])) {
             $type = $config['filter_type'];
             $categories = $config['filter_cat'];
@@ -63,54 +121,6 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                 }
             }
         }
-
-        if (empty($config['conf_enabled'])) {
-            $collection->addAttributeToFilter('visibility', array('in' => array(2, 3, 4)));
-        }
-
-        if (!empty($config['filters'])) {
-            $this->addFilters($config['filters'], $collection);
-        }
-
-        if (!empty($config['hide_no_stock'])) {
-            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($collection);
-        }
-
-        $attributes = $this->getAttributes($config['field']);
-        $collection->addAttributeToSelect($attributes);
-
-        $collection->joinTable(
-            'cataloginventory/stock_item', 'product_id=entity_id', array(
-                "qty"                       => "qty",
-                "is_in_stock"               => "is_in_stock",
-                "manage_stock"              => "manage_stock",
-                "use_config_manage_stock"   => "use_config_manage_stock",
-                "min_sale_qty"              => "min_sale_qty",
-                "qty_increments"            => "qty_increments",
-                "enable_qty_increments"     => "enable_qty_increments",
-                "use_config_qty_increments" => "use_config_qty_increments"
-            )
-        )->addAttributeToSelect(
-            array(
-                'qty',
-                'is_in_stock',
-                'manage_stock',
-                'use_config_manage_stock',
-                'min_sale_qty',
-                'qty_increments',
-                'enable_qty_increments',
-                'use_config_qty_increments'
-            )
-        );
-
-        $this->joinPriceIndexLeft($collection, $websiteId);
-        $collection->getSelect()->group('e.entity_id');
-
-        if (!empty($config['filters'])) {
-            $this->addFilters($config['filters'], $collection);
-        }
-
-        return $collection;
     }
 
     /**
@@ -119,6 +129,7 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
      * @param                                                $type
      *
      * @return Mage_Catalog_Model_Resource_Product_Collection
+     * @throws Mage_Core_Exception
      */
     public function addFilters($filters, $collection, $type = 'simple')
     {
@@ -146,12 +157,15 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
                 continue;
             }
 
-            $attributeModel = Mage::getSingleton('eav/config')
-                ->getAttribute(Mage_Catalog_Model_Product::ENTITY, $attribute);
-            if (!$frontendInput = $attributeModel->getFrontendInput()) {
+            $productEntity = Mage_Catalog_Model_Product::ENTITY;
+            /** @var Mage_Eav_Model_Config $eavConfig */
+            $eavConfig = Mage::getSingleton('eav/config');
+            $attributeModel = $eavConfig->getAttribute($productEntity, $attribute);
+            if (!$attributeModel->getAttributeCode()) {
                 continue;
             }
 
+            $frontendInput = $attributeModel->getFrontendInput();
             if ($frontendInput == 'select' || $frontendInput == 'multiselect') {
                 $options = $attributeModel->getSource()->getAllOptions();
                 if (strpos($value, ',') !== false) {
@@ -275,8 +289,6 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
     }
 
     /**
-     * Array of default Attributes
-     *
      * @return array
      */
     public function getDefaultAttributes()
@@ -314,11 +326,13 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
     {
         $resource = Mage::getResourceSingleton('core/resource');
         $tableName = array('price_index' => $resource->getTable('catalog/product_index_price'));
-        $joinCond = join(' AND ', array(
+        $joinCond = join(
+            ' AND ', array(
             'price_index.entity_id = e.entity_id',
             'price_index.website_id = ' . $websiteId,
             'price_index.customer_group_id = 0'
-        ));
+            )
+        );
         $colls = array('final_price', 'min_price', 'max_price');
         $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
     }
@@ -348,19 +362,16 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
      * @param array $parentRelations
      * @param array $config
      *
-     * @return Mage_Catalog_Model_Resource_Product_Collection
+     * @return Magmodules_Sooqr_Model_Resource_Product_Collection
+     * @throws Mage_Core_Exception
      */
     public function getParents($parentRelations, $config)
     {
         if (!empty($config['conf_enabled']) && !empty($parentRelations)) {
-            if (!empty($config['bypass_flat'])) {
-                $collection = Mage::getModel('sooqr/resource_product_collection');
-            } else {
-                $collection = Mage::getResourceModel('catalog/product_collection');
-            }
 
-            /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
-            $collection->setStore($config['store_id'])
+            /** @var Magmodules_Sooqr_Model_Resource_Product_Collection $collection */
+            $collection = Mage::getModel('sooqr/resource_product_collection')
+                ->setStore($config['store_id'])
                 ->addStoreFilter($config['store_id'])
                 ->addUrlRewrite()
                 ->addAttributeToFilter('entity_id', array('in' => array_values($parentRelations)))
@@ -392,6 +403,8 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
     public function getCollectionCountWithFilters($productCollection)
     {
         $selectCountSql = $productCollection->getSelectCountSql();
+        $selectCountSql->reset(Zend_Db_Select::GROUP); // FIX FOR MAGENTO 1.9.0.1
+
         $connection = Mage::getSingleton('core/resource')->getConnection('core_read');
         $count = $connection->fetchOne($selectCountSql);
         return $count;

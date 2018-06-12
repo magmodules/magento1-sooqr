@@ -79,6 +79,7 @@ class Magmodules_Sooqr_Model_Observer
                     );
                     $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
                 }
+
                 $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
             } catch (\Exception $e) {
                 Mage::log($e->getMessage());

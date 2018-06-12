@@ -44,7 +44,6 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Frequency
                 array('label' => Mage::helper('sooqr')->__('Every 15 minutes'), 'value' => '15'),
                 array('label' => Mage::helper('sooqr')->__('Custom'), 'value' => 'custom_expr')
             );
-
         }
 
         return $this->options;

@@ -29,7 +29,10 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Version
      */
     public function _getElementHtml(Varien_Data_Form_Element_Abstract $element)
     {
-        return Mage::getConfig()->getNode()->modules->Magmodules_Sooqr->version;
+        $modules = Mage::getConfig()->getNode('modules')->children();
+        $modulesArray = (array)$modules;
+        $element->setValue($modulesArray['Magmodules_Sooqr']->version);
+        return parent::_getElementHtml($element);
     }
 
 }

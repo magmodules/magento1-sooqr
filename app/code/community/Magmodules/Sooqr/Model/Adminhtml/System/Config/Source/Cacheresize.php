@@ -50,6 +50,7 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Cacheresize
                     }
                 }
             }
+
             if (empty($options)) {
                 $this->options[] = array('value' => '', 'label' => Mage::helper('adminhtml')->__('No cached sizes found'));
             }
