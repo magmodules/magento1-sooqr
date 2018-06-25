@@ -29,6 +29,10 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
      * @var Mage_Tax_Helper_Data
      */
     public $taxHelper;
+    /**
+     * @var Mage_Core_Model_Config
+     */
+    public $config;
 
     /**
      * Magmodules_Sooqr_Model_Sooqr constructor.
@@ -37,8 +41,88 @@ class Magmodules_Sooqr_Model_Sooqr extends Magmodules_Sooqr_Model_Common
     {
         $this->helper = Mage::helper('sooqr');
         $this->taxHelper = Mage::helper('tax');
+        $this->config = Mage::getModel('core/config');
     }
 
+    /**
+     * @param string $type
+     * @param null   $storeId
+     * @param bool   $return
+     *
+     * @return array|null
+     */
+    public function runScheduled($type = 'cron', $storeId = null, $return = false)
+    {
+        $returnValue = null;
+        $enabled = $this->helper->getConfigData('general/enabled');
+        $cron = $this->helper->getConfigData('generate/cron');
+        $timeStart = microtime(true);
+
+        if ($enabled && $cron) {
+            if ($storeId == null) {
+                $nextStore = $this->helper->getUncachedConfigValue('sooqr_connect/generate/cron_next');
+                $storeIds = $this->helper->getStoreIds('sooqr_connect/generate/enabled');
+                if(!count($storeIds)) {
+                    return $returnValue;
+                }
+
+                if (empty($nextStore) || ($nextStore >= count($storeIds))) {
+                    $nextStore = 0;
+                }
+
+                $storeId = $storeIds[$nextStore];
+                $nextStore++;
+            }
+
+            try {
+                /** @var Mage_Core_Model_App_Emulation $appEmulation */
+                $appEmulation = Mage::getSingleton('core/app_emulation');
+                $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
+                if ($result = $this->generateFeed($storeId)) {
+                    $this->updateConfig($result, $type, $timeStart, $storeId);
+                }
+
+                $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
+                $returnValue = ($return) ? $result : null;
+            } catch (\Exception $e) {
+                $this->helper->addToLog('runScheduled', $e->getMessage(), null, true);
+            }
+
+            if (!empty($nextStore)) {
+                $this->config->saveConfig('sooqr_connect/generate/cron_next', $nextStore, 'default', 0);
+            }
+        }
+
+        return $returnValue;
+    }
+    
+    /**
+     * @param $result
+     * @param $type
+     * @param $timeStart
+     * @param $storeId
+     */
+    public function updateConfig($result, $type, $timeStart, $storeId)
+    {
+        $html = sprintf(
+            '<a href="%s" target="_blank">%s</a><br/><small>On: %s (%s) - Products: %s/%s - Time: %s</small>',
+            $result['url'],
+            $result['url'],
+            $result['date'],
+            $type,
+            $result['qty'],
+            $result['pages'],
+            $this->helper->getTimeUsage($timeStart)
+        );
+
+        $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
+
+        if ($this->helper->getConfigData('generate/log_generation', $storeId)) {
+            $msg = strip_tags(str_replace('<br/>', ' => ', $html));
+            $this->helper->addToLog('Feed Generation Store ID ' . $storeId, $msg, null, true);
+        }
+    }
+    
     /**
      * @param        $storeId
      * @param string $type

@@ -22,70 +22,10 @@ class Magmodules_Sooqr_Model_Observer
 {
 
     /**
-     * @var Magmodules_Sooqr_Helper_Data
-     */
-    public $helper;
-
-    /**
-     * @var Mage_Core_Model_Config
-     */
-    public $config;
-
-    /**
-     * @var Magmodules_Sooqr_Model_Sooqr
-     */
-    public $feed;
-
-    /**
-     * Magmodules_Sooqr_Model_Sooqr constructor.
-     */
-    public function __construct()
-    {
-        $this->helper = Mage::helper('sooqr');
-        $this->config = Mage::getModel('core/config');
-        $this->feed = Mage::getModel('sooqr/sooqr');
-    }
-
-    /**
      *
      */
     public function scheduledGenerateSooqr()
     {
-        $storeIds = $this->helper->getStoreIds('sooqr_connect/generate/enabled');
-        $cron = Mage::getStoreConfig('sooqr_connect/generate/cron');
-
-        if ($cron && count($storeIds)) {
-            $nextStore = $this->helper->getUncachedConfigValue('sooqr_connect/generate/cron_next');
-            if (empty($nextStore) || ($nextStore >= count($storeIds))) {
-                $nextStore = 0;
-            }
-
-            $storeId = $storeIds[$nextStore];
-            $timeStart = microtime(true);
-
-            try {
-                /** @var Mage_Core_Model_App_Emulation $appEmulation */
-                $appEmulation = Mage::getSingleton('core/app_emulation');
-                $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
-                if ($result = $this->feed->generateFeed($storeId)) {
-                    $html = sprintf(
-                        '<a href="%s" target="_blank">%s</a><br/><small>On: %s (cron) - Products: %s/%s - Time: %s</small>',
-                        $result['url'],
-                        $result['url'],
-                        $result['date'],
-                        $result['qty'],
-                        $result['pages'],
-                        $this->helper->getTimeUsage($timeStart)
-                    );
-                    $this->config->saveConfig('sooqr_connect/generate/feed_result', $html, 'stores', $storeId);
-                }
-
-                $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
-            } catch (\Exception $e) {
-                Mage::log($e->getMessage());
-            }
-
-            $this->config->saveConfig('sooqr_connect/generate/cron_next', ($nextStore + 1), 'default', 0);
-        }
+        Mage::getModel('sooqr/sooqr')->runScheduled();
     }
 }

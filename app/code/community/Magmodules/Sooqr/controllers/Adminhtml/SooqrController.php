@@ -66,16 +66,7 @@ class Magmodules_Sooqr_Adminhtml_SooqrController extends Mage_Adminhtml_Controll
                     $appEmulation = Mage::getSingleton('core/app_emulation');
                     $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($storeId);
                     if ($result = $this->feed->generateFeed($storeId)) {
-                        $html = sprintf(
-                            '<a href="%s" target="_blank">%s</a><br/><small>On: %s (manual) - Products: %s/%s - Time: %s</small>',
-                            $result['url'],
-                            $result['url'],
-                            $result['date'],
-                            $result['qty'],
-                            $result['pages'],
-                            $this->helper->getTimeUsage($timeStart)
-                        );
-                        $this->config->saveConfig(self::XPATH_RESULT, $html, 'stores', $storeId);
+                        $this->feed->updateConfig($result, 'manual', $timeStart, $storeId);
                         $downloadUrl = $this->getUrl('*/sooqr/download/store_id/' . $storeId);
                         $msg = $this->helper->__(
                             'Generated feed with %s products. %s',
@@ -96,7 +87,7 @@ class Magmodules_Sooqr_Adminhtml_SooqrController extends Mage_Adminhtml_Controll
                 Mage::getSingleton('adminhtml/session')->addError($msg);
             }
         } catch (\Exception $e) {
-            $this->helper->addToLog('previewAction', $e->getMessage());
+            $this->helper->addToLog('generateManualAction', $e->getMessage());
             if (strpos($e->getMessage(), 'SQLSTATE[42S22]') !== false) {
                 $msg = $this->helper->__(
                     'SQLSTATE[42S22]: Column not found, please go to %s and rebuild required indexes.',

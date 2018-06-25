@@ -64,28 +64,28 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Button
      */
     public function getFlatcheck()
     {
-        /** @var Magmodules_Sooqr_Model_Sooqr $gsModel */
-        $gsModel = Mage::getModel("sooqr/sooqr");
+        /** @var Magmodules_Sooqr_Model_Sooqr $sooqrModel */
+        $sooqrModel = Mage::getModel("sooqr/sooqr");
 
-        /** @var Magmodules_Sooqr_Helper_Data $gsHelper */
-        $gsHelper = Mage::helper("sooqr");
+        /** @var Magmodules_Sooqr_Helper_Data $sooqrHelper */
+        $sooqrHelper = Mage::helper("sooqr");
 
         try {
             $flatProduct = Mage::getStoreConfig('catalog/frontend/flat_catalog_product');
             $bypassFlat = Mage::getStoreConfig('sooqr_connect/generate/bypass_flat');
 
             if ($flatProduct && !$bypassFlat) {
-                $storeId = $gsHelper->getStoreIdConfig();
-                $nonFlatAttributes = $gsHelper->checkFlatCatalog($gsModel->getFeedAttributes($storeId, 'flatcheck'));
+                $storeId = $sooqrHelper->getStoreIdConfig();
+                $nonFlatAttributes = $sooqrHelper->checkFlatCatalog($sooqrModel->getFeedAttributes($storeId, 'flatcheck'));
                 if (!empty($nonFlatAttributes)) {
                     return sprintf(
                         '<span class="sooqr-flat">%s</span>',
-                        $gsHelper->__('Possible data issue(s) found!')
+                        $sooqrHelper->__('Possible data issue(s) found!')
                     );
                 }
             }
         } catch (\Exception $e) {
-            $gsHelper->addToLog('checkFlat', $e->getMessage());
+            $sooqrHelper->addToLog('checkFlat', $e->getMessage());
         }
 
         return null;

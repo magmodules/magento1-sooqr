@@ -29,7 +29,7 @@ $catalogSearchHelper = $this->helper('catalogsearch');
             </span>
         </button>
     </div>
-    <?php if ($this->multiSearch()) { ?>
+    <?php if ($this->multiSearch()): ?>
         <script type="text/javascript">
             var _wssq = _wssq || [];
             _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
@@ -46,9 +46,9 @@ $catalogSearchHelper = $this->helper('catalogsearch');
             _wssq.push(['suggest2._setPosition', 'screen-middle']);
             _wssq.push(['suggest2._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
             _wssq.push(['suggest2._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
-            <?php if (!$this->isTrackingEnabled()) { ?>
+            <?php if (!$this->isTrackingEnabled()): ?>
             _wssq.push(['suggest2._disableTracking']);
-            <?php } ?>
+            <?php endif; ?>
             (function () {
                 var ws = document.createElement('script');
                 ws.type = 'text/javascript';
@@ -58,16 +58,16 @@ $catalogSearchHelper = $this->helper('catalogsearch');
                 s.parentNode.insertBefore(ws, s);
             })();
         </script>
-    <?php } else { ?>
+    <?php else: ?>
         <script type="text/javascript">
             var _wssq = _wssq || [];
             _wssq.push(['_load', {'suggest': <?php echo json_encode($this->getSooqrOptions()) ?>}]);
             _wssq.push(['suggest._setPosition', 'screen-middle']);
             _wssq.push(['suggest._setLocale', '<?php echo $this->getSooqrLanguage() ?>']);
             _wssq.push(['suggest._setFixedFilters', {'magento_store': '<?php echo Mage::app()->getStore()->getCode(); ?>'}]);
-            <?php if (!$this->isTrackingEnabled()) { ?>
+            <?php if (!$this->isTrackingEnabled()): ?>
             _wssq.push(['suggest._disableTracking']);
-            <?php } ?>
+            <?php endif; ?>
             <?php echo $this->getSooqrJavascript() ?>
             (function () {
                 var ws = document.createElement('script');
@@ -78,5 +78,5 @@ $catalogSearchHelper = $this->helper('catalogsearch');
                 s.parentNode.insertBefore(ws, s);
             })();
         </script>
-    <?php } ?>
+    <?php endif; ?>
 </form>

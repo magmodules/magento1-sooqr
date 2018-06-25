@@ -32,21 +32,14 @@ class Magmodules_Sooqr_Model_Resource_Product_Collection extends Mage_Catalog_Mo
         }
 
         if (!isset($this->_flatEnabled[$storeId])) {
-            $flatHelper = $this->getFlatHelper();
-            $this->_flatEnabled[$storeId] = $flatHelper->isAvailable() && $flatHelper->isBuilt($storeId);
+            if (version_compare(Mage::getVersion(), '1.8', '>=')) {
+                $flatHelper = $this->getFlatHelper();
+                $this->_flatEnabled[$storeId] = $flatHelper->isAvailable() && $flatHelper->isBuilt($storeId);
+            } else {
+                $this->_flatEnabled[$storeId] = $this->getFlatHelper()->isEnabled($storeId);
+            }
         }
 
         return $this->_flatEnabled[$storeId];
     }
-
-    /**
-     * Force Bypass Flat
-     * Initialize resources
-     */
-    protected function _construct()
-    {
-        $this->_init('catalog/product');
-        $this->_initTables();
-    }
-
 }
