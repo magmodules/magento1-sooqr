@@ -77,8 +77,10 @@ class Magmodules_Sooqr_Helper_Selftest extends Magmodules_Sooqr_Helper_Data
                     $atts = '<i>' . implode($nonFlatAttributes, ', ') . '</i>';
                     $url = Mage::helper("adminhtml")->getUrl('adminhtml/sooqr/addToFlat');
                     $msg = $this->__('Missing Attribute(s) in Catalog Product Flat: %s', $atts);
-                    $msg .= '<br/> ' . $this->__('<a href="%s">Add</a> attributes to Flat Catalog or enable "Bypass Flat Product Tables"',
-                            $url);
+                    $msg .= '<br/> ' . $this->__(
+                        '<a href="%s">Add</a> attributes to Flat Catalog or enable "Bypass Flat Product Tables"',
+                        $url
+                    );
                     $result[] = $this->getFail($msg, '#missingattributes');
                 }
             }
@@ -110,12 +112,16 @@ class Magmodules_Sooqr_Helper_Selftest extends Magmodules_Sooqr_Helper_Data
             $modulesArray = (array)Mage::getConfig()->getNode('modules')->children();
             $currentVersion = $modulesArray['Magmodules_Sooqr']->version;
             if (version_compare($currentVersion, $latestVersion['version']) >= 0) {
-                $msg = $this->__('Running the latest version (Installed: v%s - Github: v%s)', $currentVersion,
-                    $latestVersion['version']);
+                $msg = $this->__(
+                    'Running the latest version (Installed: v%s - Github: v%s)', $currentVersion,
+                    $latestVersion['version']
+                );
                 $result[] = $this->getPass($msg);
             } else {
-                $msg = $this->__('v%s is latest version, currenlty running v%s, please update!',
-                    $latestVersion['version'], $currentVersion);
+                $msg = $this->__(
+                    'v%s is latest version, currenlty running v%s, please update!',
+                    $latestVersion['version'], $currentVersion
+                );
                 $result[] = $this->getNotice($msg, '#update');
             }
         } else {
@@ -150,17 +156,21 @@ class Magmodules_Sooqr_Helper_Selftest extends Magmodules_Sooqr_Helper_Data
         if ($type == 'pass') {
             $format = '<span class="sooqr-success">%s</span>';
         }
+
         if ($type == 'fail') {
             $format = '<span class="sooqr-error">%s</span>';
         }
+
         if ($type == 'notice') {
             $format = '<span class="sooqr-notice">%s</span>';
         }
 
         if ($format) {
             if ($link) {
-                $format = str_replace('</span>', '<span class="more"><a href="%s">More Info</a></span></span>',
-                    $format);
+                $format = str_replace(
+                    '</span>', '<span class="more"><a href="%s">More Info</a></span></span>',
+                    $format
+                );
                 return sprintf($format, Mage::helper('sooqr')->__($msg), self::SUPPORT_URL . $link);
             } else {
                 return sprintf($format, Mage::helper('sooqr')->__($msg));

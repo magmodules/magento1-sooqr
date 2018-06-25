@@ -20,7 +20,6 @@
 
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Textattribute
     extends Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
-
 {
 
     /**

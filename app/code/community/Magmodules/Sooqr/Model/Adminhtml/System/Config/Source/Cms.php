@@ -39,8 +39,8 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Cms
                 array('value' => '1', 'label' => Mage::helper('sooqr')->__('Yes, all')),
                 array('value' => '2', 'label' => Mage::helper('sooqr')->__('Yes, selection')),
             );
-
         }
+
         return $this->options;
     }
 

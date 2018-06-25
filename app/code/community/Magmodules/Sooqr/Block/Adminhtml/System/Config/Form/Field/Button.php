@@ -60,6 +60,38 @@ class Magmodules_Sooqr_Block_Adminhtml_System_Config_Form_Field_Button
     }
 
     /**
+     * @return string
+     */
+    public function getFlatcheck()
+    {
+        /** @var Magmodules_Sooqr_Model_Sooqr $sooqrModel */
+        $sooqrModel = Mage::getModel("sooqr/sooqr");
+
+        /** @var Magmodules_Sooqr_Helper_Data $sooqrHelper */
+        $sooqrHelper = Mage::helper("sooqr");
+
+        try {
+            $flatProduct = Mage::getStoreConfig('catalog/frontend/flat_catalog_product');
+            $bypassFlat = Mage::getStoreConfig('sooqr_connect/generate/bypass_flat');
+
+            if ($flatProduct && !$bypassFlat) {
+                $storeId = $sooqrHelper->getStoreIdConfig();
+                $nonFlatAttributes = $sooqrHelper->checkFlatCatalog($sooqrModel->getFeedAttributes($storeId, 'flatcheck'));
+                if (!empty($nonFlatAttributes)) {
+                    return sprintf(
+                        '<span class="sooqr-flat">%s</span>',
+                        $sooqrHelper->__('Possible data issue(s) found!')
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            $sooqrHelper->addToLog('checkFlat', $e->getMessage());
+        }
+
+        return null;
+    }
+    
+    /**
      * Generate button html
      *
      * @return string

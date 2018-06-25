@@ -20,7 +20,7 @@
 <config>
     <modules>
         <Magmodules_Sooqr>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
         </Magmodules_Sooqr>
     </modules>
     <global>
@@ -120,12 +120,13 @@
                 <frontend_version>4</frontend_version>
             </general>
             <products>
-                <id_attribute>id</id_attribute>
+                <id_attribute>entity_id</id_attribute>
                 <name_attribute>name</name_attribute>
                 <sku_attribute>sku</sku_attribute>
                 <description_attribute>description</description_attribute>
                 <brand_attribute>manufacturer</brand_attribute>
                 <image_source>small_image</image_source>
+                <visibility_inc>4</visibility_inc>
             </products>
             <generate>
                 <enabled>1</enabled>

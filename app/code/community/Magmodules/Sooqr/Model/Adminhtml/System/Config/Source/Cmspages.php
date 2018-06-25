@@ -60,6 +60,7 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Cmspages
                 );
             }
         }
+
         return $this->options;
     }
 

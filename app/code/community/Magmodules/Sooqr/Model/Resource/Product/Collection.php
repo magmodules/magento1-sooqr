@@ -15,7 +15,7 @@
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
  * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
- * @license       https://www.magmodules.eu/terms.html  Single Service License
+ * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 class Magmodules_Sooqr_Model_Resource_Product_Collection extends Mage_Catalog_Model_Resource_Product_Collection
@@ -26,17 +26,20 @@ class Magmodules_Sooqr_Model_Resource_Product_Collection extends Mage_Catalog_Mo
      */
     public function isEnabledFlat()
     {
-        return false;
-    }
+        $storeId = $this->getStoreId();
+        if (Mage::getStoreConfig('sooqr_connect/generate/bypass_flat', $storeId)) {
+            return false;
+        }
 
-    /**
-     * Force Bypass Flat
-     * Initialize resources
-     */
-    protected function _construct()
-    {
-        $this->_init('catalog/product');
-        $this->_initTables();
-    }
+        if (!isset($this->_flatEnabled[$storeId])) {
+            if (version_compare(Mage::getVersion(), '1.8', '>=')) {
+                $flatHelper = $this->getFlatHelper();
+                $this->_flatEnabled[$storeId] = $flatHelper->isAvailable() && $flatHelper->isBuilt($storeId);
+            } else {
+                $this->_flatEnabled[$storeId] = $this->getFlatHelper()->isEnabled($storeId);
+            }
+        }
 
+        return $this->_flatEnabled[$storeId];
+    }
 }

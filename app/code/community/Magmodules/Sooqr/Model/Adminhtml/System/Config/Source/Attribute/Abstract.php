@@ -66,7 +66,7 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
         usort(
             $optionArray, function ($a, $b) {
             return strcmp($a["label"], $b["label"]);
-        }
+            }
         );
 
         return array(
