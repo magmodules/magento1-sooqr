@@ -333,7 +333,7 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             'price_index.customer_group_id = 0'
             )
         );
-        $colls = array('final_price', 'min_price', 'max_price');
+        $colls = array('final_price', 'min_price', 'max_price', 'tier_price');
         $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
     }
 

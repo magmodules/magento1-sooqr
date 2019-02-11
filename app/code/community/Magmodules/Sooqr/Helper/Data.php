@@ -235,6 +235,10 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
             case 'parent_id':
                 $value = $this->getProductData($parent, $data);
                 break;
+            case 'tier_price':
+                $data['type'] = 'price';
+                $value = $this->getProductData($productData, $data);
+                break;
             case 'attribute_set_name':
                 $value = $this->getAttributeSetName($productData);
                 break;

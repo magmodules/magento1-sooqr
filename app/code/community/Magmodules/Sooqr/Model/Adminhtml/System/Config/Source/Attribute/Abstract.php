@@ -129,7 +129,6 @@ class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Attribute_Abstract
             'page_layout',
             'samples_title',
             'sku_type',
-            'tier_price',
             'url_key',
             'small_image',
             'small_image_label',
