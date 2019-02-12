@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2019 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
@@ -333,7 +333,7 @@ class Magmodules_Sooqr_Model_Common extends Mage_Core_Helper_Abstract
             'price_index.customer_group_id = 0'
             )
         );
-        $colls = array('final_price', 'min_price', 'max_price');
+        $colls = array('final_price', 'min_price', 'max_price', 'tier_price');
         $collection->getSelect()->joinLeft($tableName, $joinCond, $colls);
     }
 

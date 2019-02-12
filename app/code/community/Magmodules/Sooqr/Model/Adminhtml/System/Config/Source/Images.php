@@ -15,7 +15,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2019 (http://www.magmodules.eu)
  * @license       http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 class Magmodules_Sooqr_Model_Adminhtml_System_Config_Source_Images

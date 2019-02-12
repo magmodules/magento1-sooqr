@@ -14,7 +14,7 @@
  * @category      Magmodules
  * @package       Magmodules_Sooqr
  * @author        Magmodules <info@magmodules.eu>
- * @copyright     Copyright (c) 2018 (http://www.magmodules.eu)
+ * @copyright     Copyright (c) 2019 (http://www.magmodules.eu)
  * @license       https://www.magmodules.eu/terms.html  Single Service License
  */
 
@@ -234,6 +234,10 @@ class Magmodules_Sooqr_Helper_Data extends Magmodules_Sooqr_Helper_Write
                 break;
             case 'parent_id':
                 $value = $this->getProductData($parent, $data);
+                break;
+            case 'tier_price':
+                $data['type'] = 'price';
+                $value = $this->getProductData($productData, $data);
                 break;
             case 'attribute_set_name':
                 $value = $this->getAttributeSetName($productData);
